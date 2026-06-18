@@ -97,7 +97,7 @@
                 >
                     <option value="">Semua Metode</option>
                     <option value="cod">💵 COD</option>
-                    <option value="online_payment">💳 Online Payment</option>
+                    <option value="midtrans">💳 Midtrans</option>
                 </select>
             </div>
 

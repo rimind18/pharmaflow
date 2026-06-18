@@ -577,6 +577,9 @@ class OrderController extends Controller
                             'medicine_name' =>
                             $item->medicine->name,
 
+                            'photo' =>
+                            $item->medicine->photo,
+
                             'quantity' =>
                             $item->quantity,
 
