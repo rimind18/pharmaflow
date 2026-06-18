@@ -346,19 +346,65 @@ class OrderController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
 
-            $user = Auth::user();
+            $query = Order::with([
+                'items.medicine',
+                'user'
+            ]);
 
-            $orders = Order::with('items.medicine')
-                ->where(
-                    'customer_id',
-                    $user->id
-                )
+            if ($request->status) {
+                $query->where(
+                    'status',
+                    $request->status
+                );
+            }
+
+            if ($request->payment_method) {
+                $query->where(
+                    'payment_method',
+                    $request->payment_method
+                );
+            }
+
+            if ($request->search) {
+
+                $query->where(function ($q) use ($request) {
+
+                    $q->where(
+                        'order_number',
+                        'like',
+                        '%' . $request->search . '%'
+                    )
+                        ->orWhere(
+                            'customer_name',
+                            'like',
+                            '%' . $request->search . '%'
+                        );
+                });
+            }
+
+            if (
+                $request->start_date &&
+                $request->end_date
+            ) {
+
+                $query->whereBetween(
+                    'created_at',
+                    [
+                        $request->start_date,
+                        $request->end_date
+                    ]
+                );
+            }
+
+            $orders = $query
                 ->latest()
-                ->get();
+                ->paginate(
+                    $request->per_page ?? 20
+                );
 
             return response()->json([
                 'message' => 'Daftar order',
@@ -646,6 +692,101 @@ class OrderController extends Controller
             return response()->json([
                 'message' =>
                 $e->getMessage()
+            ], 500);
+        }
+    }
+    public function update(Request $request, $id)
+    {
+        try {
+
+            $request->validate([
+                'status' => 'required|in:pending,diproses,dikirim,selesai,dibatalkan'
+            ]);
+
+            $order = Order::findOrFail($id);
+
+            /*
+        |--------------------------------------------------------------------------
+        | STATUS FLOW VALIDATION
+        |--------------------------------------------------------------------------
+        */
+
+            $currentStatus = $order->status;
+            $newStatus = $request->status;
+
+            $allowedTransitions = [
+
+                'pending' => [
+                    'diproses',
+                    'dibatalkan'
+                ],
+
+                'diproses' => [
+                    'dikirim'
+                ],
+
+                'dikirim' => [
+                    'selesai'
+                ],
+
+                'selesai' => [],
+
+                'dibatalkan' => [],
+            ];
+
+            if (
+                !in_array(
+                    $newStatus,
+                    $allowedTransitions[$currentStatus] ?? []
+                )
+            ) {
+                return response()->json([
+                    'message' => 'Perubahan status tidak valid'
+                ], 422);
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | CANCEL ORDER
+        |--------------------------------------------------------------------------
+        */
+
+            if ($newStatus === 'dibatalkan') {
+
+                $this->reservationService
+                    ->releaseReservation($order);
+
+                Payment::where(
+                    'order_id',
+                    $order->id
+                )
+                    ->where(
+                        'status',
+                        'pending'
+                    )
+                    ->update([
+                        'status' => 'cancelled'
+                    ]);
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | UPDATE STATUS
+        |--------------------------------------------------------------------------
+        */
+
+            $order->update([
+                'status' => $newStatus
+            ]);
+
+            return response()->json([
+                'message' => 'Status berhasil diubah',
+                'data' => $order->fresh()
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'message' => $e->getMessage()
             ], 500);
         }
     }
