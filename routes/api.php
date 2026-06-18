@@ -180,12 +180,7 @@ Route::prefix('v1')->group(function () {
 
         Route::middleware('role:customer')->group(function () {
 
-            Route::get(
-                'my-orders',
-                [OrderController::class, 'index']
-            );
-
-
+            Route::get('/my-orders', [OrderController::class, 'myOrders']);
 
             Route::put('orders/{id}', [
                 OrderController::class,

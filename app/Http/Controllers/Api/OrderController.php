@@ -418,6 +418,29 @@ class OrderController extends Controller
         }
     }
 
+    public function myOrders(Request $request)
+    {
+        try {
+
+            $orders = Order::with([
+                'items.medicine'
+            ])
+                ->where('customer_id', Auth::id())
+                ->latest()
+                ->paginate($request->per_page ?? 10);
+
+            return response()->json([
+                'message' => 'Pesanan saya',
+                'data' => $orders
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function trackByPhone(Request $request)
     {
         try {
@@ -778,9 +801,18 @@ class OrderController extends Controller
         |--------------------------------------------------------------------------
         */
 
-            $order->update([
+            $updateData = [
                 'status' => $newStatus
-            ]);
+            ];
+
+            if (
+                $newStatus === 'selesai' &&
+                $order->payment_method === 'cod'
+            ) {
+                $updateData['payment_status'] = 'completed';
+            }
+
+            $order->update($updateData);
 
             return response()->json([
                 'message' => 'Status berhasil diubah',

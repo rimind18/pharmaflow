@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-5 gap-4">
+        <div class="grid md:grid-cols-5 gap-5">
             <div class="bg-white rounded-2xl p-5 shadow">
                 <p class="text-slate-500">Total</p>
 
@@ -133,8 +133,8 @@
         </div>
 
         <!-- Loading -->
-        <div v-if="loading" class="text-center py-8">
-            <p class="text-lg text-gray-600">⏳ Memuat pesanan...</p>
+        <div v-if="loading">
+            <div class="animate-pulse h-40 bg-slate-200 rounded-3xl"></div>
         </div>
 
         <!-- Table -->
@@ -151,9 +151,15 @@
                                 {{ order.order_number }}
                             </h3>
 
-                            <p class="text-slate-500 mt-1">
-                                {{ order.customer_name }}
-                            </p>
+                            <div class="mt-2">
+                                <p class="font-semibold">
+                                    {{ order.customer_name }}
+                                </p>
+
+                                <p class="text-sm text-slate-500">
+                                    {{ order.customer_phone }}
+                                </p>
+                            </div>
 
                             <p class="text-sm text-slate-400">
                                 {{ formatDate(order.created_at) }}
@@ -162,7 +168,7 @@
 
                         <span
                             :class="[
-                                'px-4 py-2 rounded-full text-white text-sm font-semibold',
+                                'px-4 py-2 rounded-full font-semibold',
                                 getStatusColor(order.status),
                             ]"
                         >
@@ -185,6 +191,21 @@
                             <p class="font-bold">
                                 {{ order.payment_method }}
                             </p>
+
+                            <span
+                                class="text-xs px-2 py-1 rounded-full"
+                                :class="
+                                    order.payment_status === 'paid'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-yellow-100 text-yellow-700'
+                                "
+                            >
+                                {{
+                                    order.payment_status === "paid"
+                                        ? "LUNAS"
+                                        : "BELUM BAYAR"
+                                }}
+                            </span>
                         </div>
 
                         <div>
@@ -204,18 +225,25 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-3 mt-6">
+                    <div class="flex flex-wrap gap-2 mt-6">
                         <button
                             @click="viewDetail(order)"
-                            class="px-4 py-2 bg-sky-600 text-white rounded-xl"
+                            class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:scale-105 transition"
                         >
                             Detail
                         </button>
 
                         <button
+                            @click="copyOrderNumber(order.order_number)"
+                            class="px-4 py-2 bg-slate-600 text-white rounded-xl"
+                        >
+                            Copy ID
+                        </button>
+
+                        <button
                             v-if="order.status === 'pending'"
                             @click="updateOrderStatus(order, 'diproses')"
-                            class="px-4 py-2 bg-amber-600 text-white rounded-xl"
+                            class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:scale-105 transition"
                         >
                             Proses
                         </button>
@@ -223,7 +251,7 @@
                         <button
                             v-if="order.status === 'diproses'"
                             @click="updateOrderStatus(order, 'dikirim')"
-                            class="px-4 py-2 bg-purple-600 text-white rounded-xl"
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:scale-105 transition"
                         >
                             Kirim
                         </button>
@@ -231,7 +259,7 @@
                         <button
                             v-if="order.status === 'dikirim'"
                             @click="updateOrderStatus(order, 'selesai')"
-                            class="px-4 py-2 bg-green-600 text-white rounded-xl"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:scale-105 transition"
                         >
                             Selesai
                         </button>
@@ -242,7 +270,7 @@
                                 order.status !== 'dibatalkan'
                             "
                             @click="updateOrderStatus(order, 'dibatalkan')"
-                            class="px-4 py-2 bg-red-600 text-white rounded-xl"
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:scale-105 transition"
                         >
                             Batalkan
                         </button>
@@ -285,7 +313,12 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Customer</p>
-                        <p class="font-bold">{{ selectedOrder.user?.name }}</p>
+                        <p class="font-bold">
+                            {{ selectedOrder.customer_name }}
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            {{ selectedOrder.customer_phone }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Status</p>
@@ -303,10 +336,40 @@
                 </div>
 
                 <!-- Shipping Info -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="mb-6 p-5 bg-slate-50 rounded-2xl border">
                     <h3 class="font-bold mb-2">📍 Alamat Pengiriman</h3>
                     <p class="text-sm">{{ selectedOrder.delivery_address }}</p>
                     <p class="text-sm">{{ selectedOrder.delivery_city }}</p>
+                </div>
+
+                <div class="mb-6 p-5 bg-blue-50 rounded-2xl border">
+                    <h3 class="font-bold mb-3">💳 Informasi Pembayaran</h3>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-slate-500 text-sm">Metode</p>
+
+                            <p class="font-bold">
+                                {{ selectedOrder.payment_method }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-slate-500 text-sm">Status</p>
+
+                            <p class="font-bold">
+                                {{ selectedOrder.payment_status }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-slate-500 text-sm">Total</p>
+
+                            <p class="font-bold text-emerald-600">
+                                Rp{{ formatPrice(selectedOrder.total_amount) }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Items -->
@@ -392,13 +455,18 @@ const formatDate = (date) => {
 
 const getStatusColor = (status) => {
     const colors = {
-        pending: "bg-yellow-500",
-        diproses: "bg-blue-500",
-        dikirim: "bg-purple-500",
-        selesai: "bg-green-500",
-        dibatalkan: "bg-red-500",
+        pending: "bg-yellow-100 text-yellow-700",
+
+        diproses: "bg-blue-100 text-blue-700",
+
+        dikirim: "bg-purple-100 text-purple-700",
+
+        selesai: "bg-green-100 text-green-700",
+
+        dibatalkan: "bg-red-100 text-red-700",
     };
-    return colors[status] || "bg-gray-500";
+
+    return colors[status];
 };
 
 const getStatusLabel = (status) => {
@@ -471,6 +539,12 @@ const updateOrderStatus = async (order, newStatus) => {
 
 const confirmUpdateStatus = (status) => {
     updateOrderStatus(selectedOrder.value, status);
+};
+
+const copyOrderNumber = async (number) => {
+    await navigator.clipboard.writeText(number);
+
+    ElMessage.success("Nomor pesanan disalin");
 };
 
 onMounted(() => {

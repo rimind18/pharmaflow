@@ -837,11 +837,11 @@ const fetchOrders = async () => {
             },
         });
 
-        console.log("ORDERS RESPONSE", response.data);
+        console.log(response.data);
 
-        orders.value = response.data.data || [];
-
-        totalPages.value = 1;
+        orders.value = response.data.data.data || [];
+        totalPages.value = response.data.data.last_page || 1;
+        
     } catch (error) {
         ElMessage.error("Gagal memuat pesanan");
     } finally {
