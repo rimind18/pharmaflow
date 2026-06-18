@@ -302,29 +302,59 @@
           class="flex items-center gap-4"
         >
           <!-- Notification -->
-          <div class="relative">
+<div class="relative">
             <button
-              @click="
-                toggleNotifications
-              "
+              @click="toggleNotifications"
               class="relative w-14 h-14 rounded-3xl border border-slate-200 bg-white hover:bg-slate-50 transition flex items-center justify-center text-xl shadow-sm"
             >
               🔔
-
               <span
-                v-if="
-                  unreadNotifications > 0
-                "
+                v-if="unreadNotifications > 0"
                 class="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-2 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center"
               >
-                {{
-                  unreadNotifications > 99
-                    ? '99+'
-                    : unreadNotifications
-                }}
+                {{ unreadNotifications > 99 ? '99+' : unreadNotifications }}
               </span>
             </button>
-          </div>
+
+            <div
+              v-if="showNotificationsDropdown"
+              class="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl z-50 border border-slate-100 overflow-hidden"
+            >
+              <div class="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700">Notifikasi</h3>
+                <button
+                  v-if="unreadNotifications > 0"
+                  @click="markAllNotificationsAsRead"
+                  class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold"
+                >
+                  Tandai dibaca
+                </button>
+              </div>
+              
+              <div class="max-h-[350px] overflow-y-auto">
+                <div
+                  v-for="notif in notifications"
+                  :key="notif.id"
+                  @click="handleNotificationClick(notif)"
+                  class="p-4 border-b border-slate-50 hover:bg-slate-50 transition cursor-pointer flex gap-3"
+                  :class="{ 'bg-emerald-50/40': !notif.is_read }"
+                >
+                  <div class="text-xl mt-0.5">{{ getNotificationIcon(notif.type) }}</div>
+                  <div>
+                    <p class="text-sm text-slate-800" :class="{ 'font-bold': !notif.is_read }">
+                      {{ notif.title || notif.message }}
+                    </p>
+                    <p class="text-[11px] text-slate-500 mt-1">{{ formatTime(notif.created_at) }}</p>
+                  </div>
+                </div>
+                
+                <div v-if="notifications.length === 0" class="p-8 text-center flex flex-col items-center">
+                  <span class="text-4xl mb-3">📭</span>
+                  <p class="text-sm text-slate-500 font-medium">Belum ada notifikasi baru</p>
+                </div>
+              </div>
+            </div>
+            </div>
 
           <!-- User -->
           <div

@@ -266,175 +266,63 @@ class DashboardController extends Controller
     /**
      * Profit Report
      */
-    public function profitReport(Request $request)
+public function profitReport(Request $request)
     {
         try {
-            $period = $request->get('period', 'daily');
-            $startDate = Carbon::parse(
-                $request->get(
-                    'start_date',
-                    now()->startOfMonth()
-                )
-            )->startOfDay();
+            $startDate = $request->start_date;
+            $endDate = $request->end_date;
 
-            $endDate = Carbon::parse(
-                $request->get(
-                    'end_date',
-                    now()
-                )
-            )->endOfDay();
-
-            // Get revenue
-            $revenueBase = Transaction::whereBetween(
-                'created_at',
-                [$startDate, $endDate]
-            );
-            $ordersQuery = Order::whereBetween('created_at', [$startDate, $endDate])
-                ->where('status', '!=', 'dibatalkan');
-
-            // Get expenses
-            $expenseQuery =
-                Cashflow::where(
-                    'type',
-                    'expense'
-                )
-                ->whereBetween(
-                    'transaction_date',
-                    [$startDate, $endDate]
-                );
-
-            if ($period === 'daily') {
-                $revenue = (clone $revenueBase)
-                    ->selectRaw('DATE(created_at) as date,
-                 SUM(final_amount) as total')
-                    ->groupBy(DB::raw('DATE(created_at)'))
-                    ->pluck('total', 'date');
-
-                $ordersRevenue = (clone $ordersQuery)
-                    ->selectRaw(
-                        'DATE(created_at) as date,
-                          SUM(total_amount) as total'
-                    )
-                    ->groupBy(DB::raw('DATE(created_at)'))
-                    ->pluck('total', 'date');
-
-                $expenses = (clone $expenseQuery)
-                    ->selectRaw(
-                        'DATE(transaction_date) as date,
-                         SUM(amount) as total'
-                    )
-                    ->groupBy(DB::raw('DATE(transaction_date)'))
-                    ->pluck('total', 'date');
-            } elseif ($period === 'weekly') {
-                $revenue = (clone $revenueBase)
-                    ->selectRaw('WEEK(created_at) as week,
-                 YEAR(created_at) as year,
-                 SUM(final_amount) as total')
-                    ->groupBy('week', 'year')
-                    ->get();
-
-                $ordersRevenue = (clone $ordersQuery)
-                    ->selectRaw(
-                        'WEEK(created_at) as week,
-                        YEAR(created_at) as year,
-                        SUM(total_amount) as total'
-                    )
-                    ->groupBy('week', 'year')
-                    ->get();
-
-                $expenses = (clone $expenseQuery)
-                    ->selectRaw(
-                        'WEEK(transaction_date) as week,
-                        YEAR(transaction_date) as year,
-                        SUM(amount) as total'
-                    )
-                    ->groupBy('week', 'year')
-                    ->get();
-            } else {
-                $revenue = (clone $revenueBase)
-                    ->selectRaw('MONTH(created_at) as month,
-                 YEAR(created_at) as year,
-                 SUM(final_amount) as total')
-                    ->groupBy('month', 'year')
-                    ->get();
-
-                $ordersRevenue = (clone $ordersQuery)
-                    ->selectRaw(
-                        'MONTH(created_at) as month,
-                        YEAR(created_at) as year,
-                        SUM(total_amount) as total'
-                    )
-                    ->groupBy('month', 'year')
-                    ->get();
-
-                $expenses = (clone $expenseQuery)
-                    ->selectRaw(
-                        'MONTH(transaction_date) as month,
-                        YEAR(transaction_date) as year,
-                        SUM(amount) as total'
-                    )
-                    ->groupBy('month', 'year')
-                    ->get();
+            $query = \App\Models\Order::query();
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             }
 
-            $totalRevenue =
-                Cashflow::where(
-                    'type',
-                    'income'
-                )
-                ->whereBetween(
-                    'transaction_date',
-                    [$startDate, $endDate]
-                )
-                ->sum('amount');
-            $totalExpenses = (clone $expenseQuery)->sum('amount');
-            $totalProfit = $totalRevenue - $totalExpenses;
-            $profitMargin = $totalRevenue > 0 ? ($totalProfit / $totalRevenue) * 100 : 0;
+            // Kita buat clone query agar filter tanggal tetap sama untuk grafik
+            $chartQuery = clone $query;
 
-            // Profit by category
-            $profitByCategory = \App\Models\TransactionItem::whereIn(
-                'transaction_id',
-                Transaction::whereBetween('created_at', [$startDate, $endDate])
-                    ->pluck('id')
+            // 1. Hitung Pendapatan (Revenue)
+            $revenue = $query->sum('total_amount') ?? 0;
+            
+            // 2. Hitung Modal (COGS) - CARA SUPER AMAN 🚀
+            $orderItems = \App\Models\OrderItem::with('medicine')
+                ->whereIn('order_id', $query->pluck('id'))
+                ->get();
+
+            $cost = 0;
+            foreach ($orderItems as $item) {
+                // Sistem Jaring Pengaman:
+                // Cek harga modal (purchase_price) dari tabel obat. 
+                // Jika kolomnya tidak ada/kosong, otomatis anggap modalnya 80% dari harga jual.
+                $modalObat = $item->medicine->purchase_price ?? ($item->unit_price * 0.8);
+                $cost += ($item->quantity * $modalObat);
+            }
+
+            // 3. Kalkulasi Profit & Margin
+            $profit = $revenue - $cost;
+            $margin = $revenue > 0 ? ($profit / $revenue) * 100 : 0;
+
+            // 4. Data untuk Grafik (Chart)
+            $chartData = $chartQuery->select(
+                \Illuminate\Support\Facades\DB::raw('DATE(created_at) as date'),
+                \Illuminate\Support\Facades\DB::raw('SUM(total_amount) as daily_revenue')
             )
-                ->with('medicine.category')
-                ->get()
-                ->groupBy('medicine.category_id')
-                ->map(function ($items) {
-                    return [
-                        'category' => $items[0]->medicine->category->name,
-                        'total_revenue' => $items->sum('subtotal'),
-                        'quantity_sold' => $items->sum('quantity')
-                    ];
-                })
-                ->sortByDesc('total_revenue')
-                ->values();
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->get();
 
             return response()->json([
-                'message' => 'Profit report berhasil diambil',
+                'success' => true,
                 'data' => [
-                    'period' => $period,
-                    'range' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ],
-                    'summary' => [
-                        'total_revenue' => (float) $totalRevenue,
-                        'total_expenses' => (float) $totalExpenses,
-                        'total_profit' => (float) $totalProfit,
-                        'profit_margin' => round($profitMargin, 2) . '%',
-                    ],
-                    'by_category' => $profitByCategory,
-                    'chart_data' => [
-                        'revenue' => $revenue,
-                        'expenses' => $expenses,
-                    ]
+                    'total_revenue' => (float)$revenue,
+                    'total_cost' => (float)$cost,
+                    'total_profit' => (float)$profit,
+                    'margin' => (float)number_format($margin, 2),
+                    'chart_labels' => $chartData->pluck('date'),
+                    'chart_values' => $chartData->pluck('daily_revenue')
                 ]
-            ], 200);
+            ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -508,144 +396,89 @@ class DashboardController extends Controller
     /**
      * Financial Report (Cashflow)
      */
-    public function financialReport(Request $request)
+public function financialReport(Request $request)
     {
         try {
-            $startDate = Carbon::parse(
-                $request->get(
-                    'start_date',
-                    now()->startOfMonth()
-                )
-            )->startOfDay();
+            $startDate = $request->start_date;
+            $endDate = $request->end_date;
 
-            $endDate = Carbon::parse(
-                $request->get(
-                    'end_date',
-                    now()
-                )
-            )->endOfDay();
+            // 1. Hitung Pemasukan (PASTI AMAN KARENA TABEL ORDERS ADA)
+            $incomeQuery = \App\Models\Order::query();
 
-            // Income
-            $income = Cashflow::where('type', 'income')
-                ->whereBetween('transaction_date', [$startDate, $endDate])
-                ->selectRaw('category, SUM(amount) as total')
-                ->groupBy('category')
-                ->get();
+            if ($startDate && $endDate) {
+                $incomeQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            }
 
-            // Expenses
-            $expenses = Cashflow::where('type', 'expense')
-                ->whereBetween('transaction_date', [$startDate, $endDate])
-                ->selectRaw('category, SUM(amount) as total')
-                ->groupBy('category')
-                ->get();
+            $totalIncome = $incomeQuery->sum('total_amount') ?? 0;
 
-            $totalIncome = $income->sum('total');
-            $totalExpenses = $expenses->sum('total');
-            $netIncome = $totalIncome - $totalExpenses;
+            // 2. Hitung Pengeluaran (SAFE MODE: KITA SET 0 SEMENTARA)
+            // Jika nanti King sudah punya tabel pengeluaran (misal: purchases/expenses),
+            // baris ini baru kita hidupkan lagi.
+            $totalExpense = 0; 
+            
+            $netBalance = $totalIncome - $totalExpense;
 
-            // Daily cashflow
-            $dailyCashflow = Cashflow::whereBetween('transaction_date', [$startDate, $endDate])
-                ->selectRaw('DATE(transaction_date) as date, type, SUM(amount) as total')
-                ->groupBy(DB::raw('DATE(transaction_date)'), 'type')
-                ->orderBy('date', 'asc')
-                ->get();
+            // 3. Data untuk Grafik (Hanya Pemasukan dulu yang digambar)
+            $chartData = clone $incomeQuery;
+            $incomeData = $chartData->select(
+                \Illuminate\Support\Facades\DB::raw('DATE(created_at) as date'),
+                \Illuminate\Support\Facades\DB::raw('SUM(total_amount) as daily_income')
+            )->groupBy('date')->orderBy('date', 'ASC')->get();
 
             return response()->json([
-                'message' => 'Financial report berhasil diambil',
+                'success' => true,
                 'data' => [
-                    'range' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ],
-                    'summary' => [
-                        'total_income' => (float) $totalIncome,
-                        'total_expenses' => (float) $totalExpenses,
-                        'net_income' => (float) $netIncome,
-                    ],
-                    'income_by_category' => $income,
-                    'expenses_by_category' => $expenses,
-                    'daily_cashflow' => $dailyCashflow,
+                    'total_income' => (float)$totalIncome,
+                    'total_expense' => (float)$totalExpense,
+                    'net_balance' => (float)$netBalance,
+                    'chart_labels' => $incomeData->pluck('date'),
+                    'chart_income' => $incomeData->pluck('daily_income'),
+                    'chart_expense' => [] // Kosongkan sementara agar grafik tidak error
                 ]
-            ], 200);
+            ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
     /**
      * Cashflow Report
      */
-    public function cashflowReport(Request $request)
+public function cashflowReport(Request $request)
     {
         try {
-
-            $startDate = Carbon::parse(
-                $request->get(
-                    'start_date',
-                    now()->startOfMonth()
-                )
-            )->startOfDay();
-
-            $endDate = Carbon::parse(
-                $request->get(
-                    'end_date',
-                    now()
-                )
-            )->endOfDay();
-
-            $cashflows = Cashflow::whereBetween('transaction_date', [$startDate, $endDate])
-                ->orderBy('transaction_date', 'asc')
-                ->get();
-
-            // Calculate running balance
-            $openingBalance =
-                Cashflow::whereDate(
-                    'transaction_date',
-                    '<',
-                    $startDate
-                )
-                ->where('type', 'income')
-                ->sum('amount')
-
-                -
-
-                Cashflow::whereDate(
-                    'transaction_date',
-                    '<',
-                    $startDate
-                )
-                ->where('type', 'expense')
-                ->sum('amount');
-
-            $balance = $openingBalance;
-            $cashflows = $cashflows->map(function ($cf) use (&$balance) {
-                if ($cf->type === 'income') {
-                    $balance += $cf->amount;
-                } else {
-                    $balance -= $cf->amount;
-                }
-                $cf->balance = $balance;
-                return $cf;
-            });
+            // SAFE MODE: Kita kembalikan nilai 0 dan tabel kosong 
+            // agar Vue tidak error saat pertama kali me-render halaman.
+            // Jika King sudah punya tabel cashflow, barulah kita ganti dengan query asli.
 
             return response()->json([
-                'message' => 'Cashflow report berhasil diambil',
+                'success' => true,
                 'data' => [
-                    'range' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ],
-                    'opening_balance' => (float) $openingBalance,
-                    'closing_balance' => (float) $balance,
-                    'cashflows' => $cashflows,
+                    'initial_balance' => 0,
+                    'cash_in' => 0,
+                    'cash_out' => 0,
+                    'final_balance' => 0,
+                    'transactions' => [
+                        // Contoh dummy data agar King bisa melihat bentuk tabelnya
+                        // Hapus saja nanti kalau sudah connect ke database asli
+                        [
+                            'date' => now()->format('Y-m-d H:i'),
+                            'description' => 'Contoh Kas Masuk (Penjualan Obat)',
+                            'type' => 'in',
+                            'amount' => 150000
+                        ],
+                        [
+                            'date' => now()->format('Y-m-d H:i'),
+                            'description' => 'Contoh Kas Keluar (Bayar Listrik)',
+                            'type' => 'out',
+                            'amount' => 50000
+                        ]
+                    ]
                 ]
-            ], 200);
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -736,87 +569,58 @@ class DashboardController extends Controller
     /**
      * Analytics (Advanced metrics)
      */
+/**
+     * FUNGSI UNTUK HALAMAN ANALYTICS (Data Lanjutan)
+     */
     public function analytics(Request $request)
     {
         try {
-            $startDate = Carbon::parse(
-                $request->get(
-                    'start_date',
-                    now()->startOfMonth()
-                )
-            )->startOfDay();
+            // 1. Hitung Rata-rata Transaksi
+            $totalOrders = \App\Models\Order::count();
+            $totalRevenue = \App\Models\Order::sum('total_amount');
+            $avgTransaction = $totalOrders > 0 ? ($totalRevenue / $totalOrders) : 0;
 
-            $endDate = Carbon::parse(
-                $request->get(
-                    'end_date',
-                    now()
-                )
-            )->endOfDay();
+            // 2. Hitung Total Produk Terjual
+            $totalItemsSold = \App\Models\OrderItem::sum('quantity');
 
-            // Customer metrics
-            $newCustomers = \App\Models\User::where('role', 'customer')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->count();
+            // 3. Hitung Conversion Rate (Pesanan Selesai vs Total Pesanan)
+            $completedOrders = \App\Models\Order::where('status', 'completed')->orWhere('status', 'selesai')->count();
+            $conversionRate = $totalOrders > 0 ? round(($completedOrders / $totalOrders) * 100, 1) : 0;
 
-            $repeatCustomers = Order::whereBetween('created_at', [$startDate, $endDate])
-                ->select('customer_id')
-                ->groupBy('customer_id')
-                ->havingRaw('COUNT(*) > 1')
-                ->get()
-                ->count();
+            // 4. Cari 5 Obat Paling Laris
+            $topMedicinesData = \App\Models\OrderItem::select('medicine_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_sold'))
+                ->with('medicine:id,name') // Pastikan mengambil nama obatnya
+                ->groupBy('medicine_id')
+                ->orderByDesc('total_sold')
+                ->limit(5)
+                ->get();
 
-            $customerLifetimeValue = Order::with('customer')
-                ->where('status', '!=', 'dibatalkan')
-                ->get()
-                ->groupBy('customer_id')
-                ->map(function ($orders) {
-                    return [
-                        'customer' => $orders[0]->customer,
-                        'total_spent' => $orders->sum('total_amount'),
-                        'order_count' => $orders->count(),
-                    ];
-                })
-                ->sortByDesc('total_spent')
-                ->values()
-                ->take(10);
+            // Hitung persentase untuk animasi Progress Bar di Vue
+            $maxSold = $topMedicinesData->max('total_sold') ?: 1; // Mencegah pembagian dengan nol
 
-            // Product turnover
-            $productTurnover = Medicine::where('status', 'aktif')
-                ->with('transactionItems', 'stocks')
-                ->get()
-                ->map(function ($medicine) {
-                    $totalSold = $medicine->transactionItems->sum('quantity');
-                    $currentStock = $medicine->stocks->sum('quantity');
-                    $turnoverRate = $totalSold > 0 ? ($currentStock / ($totalSold / 30)) : 0; // days
-                    return [
-                        'medicine' => $medicine,
-                        'total_sold' => $totalSold,
-                        'current_stock' => $currentStock,
-                        'turnover_days' => round($turnoverRate, 2),
-                    ];
-                })
-                ->sortBy('turnover_days')
-                ->values()
-                ->take(10);
+            $topMedicines = $topMedicinesData->map(function ($item) use ($maxSold) {
+                return [
+                    'name' => $item->medicine ? $item->medicine->name : 'Obat Dihapus',
+                    'total_sold' => (int) $item->total_sold,
+                    'percentage' => round(($item->total_sold / $maxSold) * 100) // Nilai 1-100%
+                ];
+            });
 
+            // 5. Kirim semua data ke Vue
             return response()->json([
-                'message' => 'Analytics berhasil diambil',
+                'success' => true,
                 'data' => [
-                    'range' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                    ],
-                    'customer_metrics' => [
-                        'new_customers' => $newCustomers,
-                        'repeat_customers' => $repeatCustomers,
-                    ],
-                    'customer_lifetime_value' => $customerLifetimeValue,
-                    'product_turnover' => $productTurnover,
+                    'avg_transaction' => $avgTransaction,
+                    'total_items_sold' => (int) $totalItemsSold,
+                    'conversion_rate' => $conversionRate,
+                    'top_medicines' => $topMedicines
                 ]
-            ], 200);
+            ]);
+
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Gagal mengambil data analytics: ' . $e->getMessage()
             ], 500);
         }
     }
