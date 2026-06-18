@@ -281,6 +281,29 @@ const quantity = ref(1);
 
 const relatedMedicines = ref([]);
 
+
+const fetchOrder = async () => {
+    try {
+
+        const orderNumber =
+            route.params.order_number;
+
+        const response =
+            await api.get(
+                `/orders/${orderNumber}`
+            );
+
+        order.value =
+            response.data.data;
+
+    } catch (error) {
+
+        ElMessage.error(
+            "Gagal memuat detail pesanan"
+        );
+    }
+};
+
 const fetchMedicine = async () => {
     loading.value = true;
 

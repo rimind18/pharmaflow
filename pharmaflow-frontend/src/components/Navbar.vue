@@ -82,27 +82,39 @@
                     </template>
 
                     <!-- User -->
-                    <template v-else>
-                        <el-dropdown>
-                            <span
-                                class="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100"
+                    <el-dropdown>
+                        <div class="flex items-center gap-2 cursor-pointer">
+                            <div
+                                class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold"
                             >
-                                👤 {{ authStore.user?.name }}
-                            </span>
+                                {{ authStore.user?.name?.charAt(0) }}
+                            </div>
 
-                            <template #dropdown>
-                                <el-dropdown-item
-                                    @click="router.push('/orders')"
-                                >
-                                    Pesanan Saya
+                            <span>
+                                {{ authStore.user?.name }}
+                            </span>
+                        </div>
+
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item>
+                                    <router-link to="/profile">
+                                        Profil Saya
+                                    </router-link>
                                 </el-dropdown-item>
 
-                                <el-dropdown-item @click="logout">
+                                <el-dropdown-item>
+                                    <router-link to="/orders">
+                                        Pesanan Saya
+                                    </router-link>
+                                </el-dropdown-item>
+
+                                <el-dropdown-item divided @click="logout">
                                     Logout
                                 </el-dropdown-item>
-                            </template>
-                        </el-dropdown>
-                    </template>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
                 </div>
             </div>
         </div>

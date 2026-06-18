@@ -200,22 +200,55 @@ class AuthController extends Controller
             $user = JWTAuth::parseToken()
                 ->authenticate();
 
+            $user->loadCount([
+                'orders'
+            ]);
+
             return response()->json([
 
                 'message' =>
                 'Data user berhasil diambil',
 
-                'user' =>
-                $user
+                'user' => $user,
 
+                'stats' => [
+
+                    'total_orders' =>
+                    $user->orders()->count(),
+
+                    'completed_orders' =>
+                    $user->orders()
+                        ->where(
+                            'status',
+                            'selesai'
+                        )
+                        ->count(),
+
+                    'cancelled_orders' =>
+                    $user->orders()
+                        ->where(
+                            'status',
+                            'dibatalkan'
+                        )
+                        ->count(),
+
+                    'total_spending' =>
+                    $user->orders()
+                        ->whereNotIn(
+                            'status',
+                            ['dibatalkan']
+                        )
+                        ->sum(
+                            'total_amount'
+                        )
+
+                ]
             ]);
         } catch (JWTException $e) {
 
             return response()->json([
-
                 'message' =>
                 'Token tidak valid'
-
             ], 401);
         }
     }
@@ -308,5 +341,107 @@ class AuthController extends Controller
 
             ], 401);
         }
+    }
+    public function updateProfile(
+        Request $request
+    ) {
+        $user = JWTAuth::parseToken()
+            ->authenticate();
+
+        $validated =
+            $request->validate([
+
+                'name' =>
+                'required|string|max:255',
+
+                'phone' =>
+                'nullable|string|max:20',
+
+                'address' =>
+                'nullable|string',
+
+                'city' =>
+                'nullable|string|max:100',
+
+                'province' =>
+                'nullable|string|max:100',
+
+                'postal_code' =>
+                'nullable|string|max:20',
+            ]);
+
+        $user->update(
+            $validated
+        );
+
+        return response()->json([
+
+            'message' =>
+            'Profil berhasil diperbarui',
+
+            'user' =>
+            $user
+        ]);
+    }
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+
+            'current_password' => [
+                'required'
+            ],
+
+            'password' => [
+                'required',
+                'confirmed',
+                \Illuminate\Validation\Rules\Password::min(8)
+                    ->letters()
+                    ->numbers()
+            ]
+
+        ]);
+
+        $user = JWTAuth::parseToken()
+            ->authenticate();
+
+        if (
+            !Hash::check(
+                $request->current_password,
+                $user->password
+            )
+        ) {
+
+            return response()->json([
+                'message' => 'Password lama salah'
+            ], 422);
+        }
+
+        if (
+            Hash::check(
+                $request->password,
+                $user->password
+            )
+        ) {
+
+            return response()->json([
+                'message' =>
+                'Password baru tidak boleh sama dengan password lama'
+            ], 422);
+        }
+
+        $user->update([
+
+            'password' => Hash::make(
+                $request->password
+            )
+
+        ]);
+
+        return response()->json([
+
+            'message' =>
+            'Password berhasil diubah'
+
+        ]);
     }
 }

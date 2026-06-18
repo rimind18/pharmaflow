@@ -1,14 +1,17 @@
 <template>
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <div
-            class="mb-10 rounded-3xl bg-gradient-to-r from-emerald-600 to-green-700 p-10 text-white"
+    <div class="min-h-screen bg-gray-50">
+       <div
+            class="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-green-600 to-teal-700"
         >
+         <div class="text-white max-w-7xl mx-auto px-6 py-8 md:py-10">
             <h1 class="text-4xl font-bold">Temukan Produk Kesehatan Terbaik</h1>
 
             <p class="mt-3 text-emerald-100">
                 Obat, vitamin, suplemen dan kebutuhan kesehatan lainnya.
             </p>
         </div>
+</div>
+
         <h1 class="text-4xl font-bold mb-8">🏪 Katalog Obat</h1>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">

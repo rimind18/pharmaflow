@@ -129,6 +129,22 @@ Route::prefix('v1')->group(function () {
 
         Route::post('auth/validate', [AuthController::class, 'validateToken']);
 
+        Route::put(
+            'profile',
+            [
+                AuthController::class,
+                'updateProfile'
+            ]
+        );
+
+        Route::put(
+            'change-password',
+            [
+                AuthController::class,
+                'changePassword'
+            ]
+        );
+
         // ============================================
         // NOTIFICATIONS (ALL ROLES)
         // ============================================
