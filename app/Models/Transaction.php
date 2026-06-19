@@ -45,42 +45,44 @@ class Transaction extends Model
 
         static::creating(function ($transaction) {
 
-            if (!$transaction->reference_number) {
-
-                $prefix =
-                    'TRX-' .
-                    now()->format('Ymd');
-
-                $last =
-                    self::latest()
-                    ->first();
-
-                $number = 1;
-
-                if ($last) {
-
-                    $lastNumber =
-                        intval(
-                            substr(
-                                $last->reference_number,
-                                -4
-                            )
-                        );
-
-                    $number =
-                        $lastNumber + 1;
-                }
-
-                $transaction->reference_number =
-                    $prefix .
-                    '-' .
-                    str_pad(
-                        $number,
-                        4,
-                        '0',
-                        STR_PAD_LEFT
-                    );
+            if ($transaction->reference_number) {
+                return;
             }
+
+            $today = now()->format('Ymd');
+
+            $lastTransaction =
+                self::whereDate(
+                    'created_at',
+                    today()
+                )
+                ->orderByDesc('id')
+                ->first();
+
+            $sequence = 1;
+
+            if (
+                $lastTransaction &&
+                preg_match(
+                    '/(\d+)$/',
+                    $lastTransaction->reference_number,
+                    $matches
+                )
+            ) {
+                $sequence =
+                    intval($matches[1]) + 1;
+            }
+
+            $transaction->reference_number =
+                'TRX-' .
+                $today .
+                '-' .
+                str_pad(
+                    $sequence,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                );
         });
     }
 

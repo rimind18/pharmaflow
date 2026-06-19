@@ -130,9 +130,8 @@ const routes = [
 
             // POS
             {
-                path: "pos",
-                name: "POS",
-                component: () => import("@/pages/staff/POS.vue"),
+                path: "/staff/pos",
+                component: () => import("@/pages/staff/StaffPOS.vue"),
             },
 
             {
