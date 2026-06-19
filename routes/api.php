@@ -443,6 +443,15 @@ Route::prefix('v1')->group(function () {
                 'cashflow/{id}',
                 [CashflowController::class, 'destroy']
             );
+
+            Route::prefix('stock-opname')->group(function () {
+
+                Route::post('/', [StockOpnameController::class, 'store']);
+
+                Route::get('/', [StockOpnameController::class, 'index']);
+
+                Route::get('/{id}', [StockOpnameController::class, 'show']);
+            });
         });
 
         // ============================================
@@ -686,21 +695,6 @@ Route::prefix('v1')->group(function () {
             );
 
             Route::prefix('stock-opname')->group(function () {
-
-                Route::post(
-                    '/',
-                    [StockOpnameController::class, 'store']
-                );
-
-                Route::get(
-                    '/',
-                    [StockOpnameController::class, 'index']
-                );
-
-                Route::get(
-                    '/{id}',
-                    [StockOpnameController::class, 'show']
-                );
 
                 Route::post(
                     '/{id}/approve',
