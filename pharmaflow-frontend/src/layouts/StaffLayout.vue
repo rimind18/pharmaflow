@@ -3,7 +3,7 @@
         <!-- SIDEBAR -->
         <aside
             :class="[
-                'fixed left-0 top-0 z-50 h-screen w-72 bg-white border-r border-slate-200 flex flex-col transition-all duration-300',
+                'fixed left-0 top-0 z-50 h-screen w-[280px] bg-white border-r border-slate-200 flex flex-col shadow-xl transition-all duration-300',
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full',
             ]"
         >
@@ -11,9 +11,13 @@
             <div class="px-6 pt-7 pb-5 border-b border-slate-100">
                 <div class="flex items-center gap-4">
                     <div
-                        class="w-14 h-14 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg flex items-center justify-center text-white text-2xl"
+                        class="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center shadow-lg"
                     >
-                        💊
+                        <span
+                            class="text-cyan-400 font-black text-2xl tracking-tight"
+                        >
+                            PF
+                        </span>
                     </div>
 
                     <div>
@@ -27,17 +31,21 @@
 
                 <!-- User Card -->
                 <div
-                    class="mt-6 rounded-[28px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4"
+                    class="mt-4 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-4"
                 >
                     <div class="flex items-center gap-4">
                         <div
-                            class="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-bold text-lg shadow-md"
+                            class="relative w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-bold shadow-lg"
                         >
                             {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+
+                            <span
+                                class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
+                            ></span>
                         </div>
 
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-slate-800 text-sm">
+                        <div>
+                            <h3 class="font-semibold text-slate-900">
                                 {{ authStore.user?.name }}
                             </h3>
 
@@ -48,14 +56,18 @@
                                     )
                                 }}
                             </p>
+
+                            <p class="text-[11px] text-emerald-600 mt-1">
+                                Online
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- NAVIGATION -->
-            <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-7">
-                <!-- Dashboard -->
+            <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+                <!-- DASHBOARD -->
                 <div>
                     <p class="menu-title">Dashboard</p>
 
@@ -63,20 +75,21 @@
                         to="/staff/dashboard"
                         :class="menuClass('/staff/dashboard')"
                     >
-                        <span>📊</span>
-                        <span>Dashboard</span>
+                        <LayoutDashboard class="w-5 h-5" />
+
+                        <span> Dashboard </span>
                     </router-link>
                 </div>
 
-                <!-- POS -->
+                <!-- PENJUALAN -->
                 <div>
-                    <p class="menu-title">POS & Transactions</p>
+                    <p class="menu-title">Penjualan</p>
 
                     <router-link
                         to="/staff/pos"
                         :class="menuClass('/staff/pos')"
                     >
-                        <span>🖥️</span>
+                        <Monitor class="w-5 h-5" />
                         <span>POS Kasir</span>
                     </router-link>
 
@@ -84,20 +97,28 @@
                         to="/staff/transactions"
                         :class="menuClass('/staff/transactions')"
                     >
-                        <span>💰</span>
-                        <span>Transactions</span>
+                        <ReceiptText class="w-5 h-5" />
+                        <span>Transaksi</span>
+                    </router-link>
+
+                    <router-link
+                        to="/staff/orders"
+                        :class="menuClass('/staff/orders')"
+                    >
+                        <ShoppingCart class="w-5 h-5" />
+                        <span>Orders</span>
                     </router-link>
 
                     <router-link
                         to="/staff/daily-report"
                         :class="menuClass('/staff/daily-report')"
                     >
-                        <span>📋</span>
-                        <span>Laporan Harian</span>
+                        <ClipboardCheck />
+                        <span>Laporan</span>
                     </router-link>
                 </div>
 
-                <!-- Inventory -->
+                <!-- INVENTORY -->
                 <div>
                     <p class="menu-title">Inventory</p>
 
@@ -105,7 +126,7 @@
                         to="/staff/medicines"
                         :class="menuClass('/staff/medicines')"
                     >
-                        <span>💊</span>
+                        <Pill class="w-5 h-5" />
                         <span>Obat</span>
                     </router-link>
 
@@ -113,7 +134,7 @@
                         to="/staff/categories"
                         :class="menuClass('/staff/categories')"
                     >
-                        <span>📂</span>
+                        <FolderTree class="w-5 h-5" />
                         <span>Kategori</span>
                     </router-link>
 
@@ -121,22 +142,15 @@
                         to="/staff/stocks"
                         :class="menuClass('/staff/stocks')"
                     >
-                        <span>📦</span>
-                        <span>Stok</span>
+                        <Package class="w-5 h-5" />
+                        <span>Stock Obat</span>
                     </router-link>
-
-                    <RouterLink
-                        to="/staff/stock-opname"
-                        :class="menuClass('/staff/stockopname')"
-                    >
-                        📦 Stock Opname
-                    </RouterLink>
 
                     <router-link
                         to="/staff/warehouses"
                         :class="menuClass('/staff/warehouses')"
                     >
-                        <span>🏢</span>
+                        <Warehouse class="w-5 h-5" />
                         <span>Gudang</span>
                     </router-link>
 
@@ -144,49 +158,49 @@
                         to="/staff/shelves"
                         :class="menuClass('/staff/shelves')"
                     >
-                        <span>🗂️</span>
+                        <Layers class="w-5 h-5" />
                         <span>Rak</span>
+                    </router-link>
+
+                    <router-link
+                        to="/staff/stock-opname"
+                        :class="menuClass('/staff/stock-opname')"
+                    >
+                        <ClipboardList class="w-5 h-5" />
+                        <span>Stock Opname</span>
                     </router-link>
                 </div>
 
-                <!-- Purchase -->
+                <!-- PURCHASE -->
                 <div>
-                    <p class="menu-title">Purchase</p>
-
-                    <router-link
-                        to="/staff/purchases"
-                        :class="menuClass('/staff/purchases')"
-                    >
-                        <span>🛒</span>
-                        <span>Pembelian</span>
-                    </router-link>
+                    <p class="menu-title">Pembelian</p>
 
                     <router-link
                         to="/staff/suppliers"
                         :class="menuClass('/staff/suppliers')"
                     >
-                        <span>🏭</span>
-                        <span>Supplier</span>
+                        <Truck class="w-5 h-5" />
+                        <span>suppliers</span>
+                    </router-link>
+
+                    <router-link
+                        to="/staff/purchases"
+                        :class="menuClass('/staff/purchases')"
+                    >
+                        <ShoppingBasket class="w-5 h-5" />
+                        <span>Pembelian</span>
                     </router-link>
                 </div>
 
-                <!-- Management -->
+                <!-- SDM -->
                 <div>
-                    <p class="menu-title">Management</p>
-
-                    <router-link
-                        to="/staff/orders"
-                        :class="menuClass('/staff/orders')"
-                    >
-                        <span>📦</span>
-                        <span>Orders</span>
-                    </router-link>
+                    <p class="menu-title">SDM</p>
 
                     <router-link
                         to="/staff/employees"
                         :class="menuClass('/staff/employees')"
                     >
-                        <span>👥</span>
+                        <Users class="w-5 h-5" />
                         <span>Karyawan</span>
                     </router-link>
 
@@ -194,23 +208,28 @@
                         to="/staff/attendance"
                         :class="menuClass('/staff/attendance')"
                     >
-                        <span>✅</span>
+                        <CalendarCheck class="w-5 h-5" />
                         <span>Kehadiran</span>
                     </router-link>
+                </div>
+
+                <!-- MARKETING -->
+                <div>
+                    <p class="menu-title">Marketing</p>
 
                     <router-link
                         to="/staff/promotions"
                         :class="menuClass('/staff/promotions')"
                     >
-                        <span>🎉</span>
-                        <span>Promosi</span>
+                        <Megaphone class="w-5 h-5" />
+                        <span>Promo</span>
                     </router-link>
 
                     <router-link
                         to="/staff/vouchers"
                         :class="menuClass('/staff/vouchers')"
                     >
-                        <span>🎟️</span>
+                        <Ticket class="w-5 h-5" />
                         <span>Voucher</span>
                     </router-link>
                 </div>
@@ -222,7 +241,10 @@
                     @click="logout"
                     class="w-full rounded-3xl bg-red-50 text-red-600 py-4 font-semibold hover:bg-red-100 transition"
                 >
-                    🚪 Logout
+                    <div class="flex justify-center gap-3">
+                        <LogOut class="w-5 h-5" />
+                        Logout
+                    </div>
                 </button>
             </div>
         </aside>
@@ -230,8 +252,8 @@
         <!-- MAIN -->
         <div
             :class="[
-                'flex-1 flex flex-col transition-all duration-300 min-w-0 w-full',
-                sidebarOpen ? 'ml-72' : 'ml-0',
+                'flex-1 flex flex-col transition-all duration-300 min-w-0',
+                sidebarOpen ? 'ml-[260px]' : 'ml-0',
             ]"
         >
             <!-- HEADER -->
@@ -252,19 +274,48 @@
                         </h1>
 
                         <p class="text-sm text-slate-500 mt-1">
-                            Welcome back 👋
+                            {{ dayjs().format("DD MMMM YYYY") }}
                         </p>
                     </div>
                 </div>
 
+                <div
+                    class="hidden lg:flex items-center bg-slate-100 rounded-2xl px-4 h-12 w-[260px]"
+                >
+                    <Search class="w-4 h-4 text-slate-400" />
+
+                    <input
+                        type="text"
+                        placeholder="Cari menu..."
+                        class="bg-transparent ml-3 outline-none flex-1"
+                    />
+                </div>
+
                 <div class="flex items-center gap-4">
+                    <div
+                        class="hidden lg:flex items-center gap-3 bg-slate-100 rounded-2xl px-3 py-2"
+                    >
+                        <div
+                            class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold"
+                        >
+                            {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+                        </div>
+
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">
+                                {{ authStore.user?.name }}
+                            </p>
+
+                            <p class="text-xs text-slate-500">Staff</p>
+                        </div>
+                    </div>
                     <!-- Notification -->
                     <div class="relative">
                         <button
                             @click="toggleNotifications"
                             class="relative w-14 h-14 rounded-3xl border border-slate-200 bg-white hover:bg-slate-50 transition flex items-center justify-center text-xl shadow-sm"
                         >
-                            🔔
+                            <Bell class="w-6 h-6" />
 
                             <span
                                 v-if="unreadNotifications > 0"
@@ -376,6 +427,30 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import {
+    LayoutDashboard,
+    Monitor,
+    ReceiptText,
+    ShoppingCart,
+    Package,
+    Pill,
+    FolderTree,
+    ClipboardList,
+    Warehouse,
+    Layers,
+    ClipboardCheck,
+    Truck,
+    Users,
+    Search,
+    CalendarCheck,
+    ShoppingBasket,
+    Megaphone,
+    Ticket,
+    Bell,
+    LogOut,
+    Menu,
+    ChevronRight,
+} from "lucide-vue-next";
 
 import { useRoute, useRouter } from "vue-router";
 
@@ -474,21 +549,24 @@ const currentPageTitle = computed(() => {
 const menuClass = (path) => {
     return route.path.startsWith(path)
         ? `
-      flex items-center gap-3
-      rounded-2xl px-4 py-3
-      bg-emerald-500
-      text-white
-      font-medium
-      shadow-sm
-      transition-all
-    `
+        flex items-center gap-3
+        px-4 py-3 rounded-2xl
+       bg-gradient-to-r
+from-emerald-500
+via-emerald-600
+to-teal-600
+        text-white
+        font-semibold
+        shadow-lg shadow-emerald-200
+        `
         : `
-      flex items-center gap-3
-      rounded-2xl px-4 py-3
-      text-slate-700
-      hover:bg-slate-100
-      transition-all
-    `;
+        flex items-center gap-3
+        px-4 py-3 rounded-2xl
+        text-slate-500
+        hover:bg-slate-100
+        hover:text-slate-900
+        transition
+        `;
 };
 
 /* --------------------------------
@@ -704,9 +782,12 @@ watch(
 ========================= */
 
 .menu-title {
-    @apply px-4 mb-3 text-[11px]
-  font-bold uppercase tracking-[0.2em]
-  text-slate-400;
+    @apply px-4 mb-2
+    text-[10px]
+    font-bold
+    uppercase
+    tracking-[0.25em]
+    text-slate-400;
 }
 
 /* =========================
