@@ -61,56 +61,65 @@
                     </select>
                 </div>
 
-                <div class="mt-4">
-                    <label class="font-medium"> Uang Diterima </label>
+                <div v-if="paymentMethod === 'cash'">
+                    <div class="mt-4">
+                        <label class="font-medium"> Uang Diterima </label>
 
-                    <input
-                        v-model.number="paidAmount"
-                        type="number"
-                        class="w-full mt-2 border rounded-xl p-3"
-                        placeholder="Masukkan uang diterima"
-                    />
-                </div>
+                        <input
+                            v-model.number="paidAmount"
+                            type="number"
+                            class="w-full mt-2 border rounded-xl p-3"
+                        />
+                    </div>
 
-                <div class="grid grid-cols-3 gap-2 mt-3">
-                    <button
-                        @click="paidAmount = total"
-                        class="border rounded-xl py-2"
+                    <div class="grid grid-cols-3 gap-2 mt-3">
+                        <button
+                            @click="paidAmount = total"
+                            class="border rounded-xl py-2"
+                        >
+                            Pas
+                        </button>
+
+                        <button
+                            @click="paidAmount = 50000"
+                            class="border rounded-xl py-2"
+                        >
+                            50rb
+                        </button>
+
+                        <button
+                            @click="paidAmount = 100000"
+                            class="border rounded-xl py-2"
+                        >
+                            100rb
+                        </button>
+                    </div>
+
+                    <div
+                        class="flex justify-between mt-4 text-lg font-semibold"
                     >
-                        Pas
-                    </button>
+                        <span>Kembalian</span>
 
-                    <button
-                        @click="paidAmount = 50000"
-                        class="border rounded-xl py-2"
-                    >
-                        50rb
-                    </button>
-
-                    <button
-                        @click="paidAmount = 100000"
-                        class="border rounded-xl py-2"
-                    >
-                        100rb
-                    </button>
-                </div>
-
-                <div class="flex justify-between mt-4 text-lg font-semibold">
-                    <span>Kembalian</span>
-
-                    <span
-                        :class="change >= 0 ? 'text-green-600' : 'text-red-500'"
-                    >
-                        Rp{{ formatPrice(change) }}
-                    </span>
+                        <span
+                            :class="
+                                change >= 0 ? 'text-green-600' : 'text-red-500'
+                            "
+                        >
+                            Rp{{ formatPrice(change) }}
+                        </span>
+                    </div>
                 </div>
 
                 <button
                     @click="handleCheckout"
-                    :disabled="paidAmount < total || !items.length"
+                    :disabled="
+                        (paymentMethod === 'cash' && paidAmount < total) ||
+                        !items.length ||
+                        props.processing
+                    "
                     class="w-full mt-6 bg-emerald-500 text-white py-4 rounded-2xl font-bold disabled:bg-slate-300"
                 >
-                    Bayar Sekarang
+                    {{ props.processing ? "Memproses..." : "Bayar Sekarang" }}
                 </button>
             </div>
         </div>
@@ -126,6 +135,11 @@ const props = defineProps({
     items: {
         type: Array,
         default: () => [],
+    },
+
+    processing: {
+        type: Boolean,
+        default: false,
     },
 });
 
@@ -154,5 +168,4 @@ const handleCheckout = () => {
         change: change.value,
     });
 };
-
 </script>

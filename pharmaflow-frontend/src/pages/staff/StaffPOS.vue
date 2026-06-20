@@ -20,6 +20,7 @@
             <div class="col-span-4">
                 <CartPanel
                     :items="cartItems"
+                    :processing="processing"
                     @increase="increaseQty"
                     @decrease="decreaseQty"
                     @remove="removeItem"
@@ -31,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 
 import PosHeader from "@/components/pos/PosHeader.vue";
 import SearchBar from "@/components/pos/SearchBar.vue";
@@ -39,7 +40,7 @@ import ProductGrid from "@/components/pos/ProductGrid.vue";
 import CartPanel from "@/components/pos/CartPanel.vue";
 import { checkoutPOS } from "@/services/posService";
 import Swal from "sweetalert2";
-
+import { getPosSummary } from "@/services/posService";
 
 const processing = ref(false);
 
@@ -94,6 +95,9 @@ const decreaseQty = (id) => {
 };
 
 const checkout = async (payload) => {
+    if (processing.value) return;
+
+    processing.value = true;
     try {
         const rupiah = (value) =>
             new Intl.NumberFormat("id-ID").format(value || 0);
@@ -109,32 +113,41 @@ const checkout = async (payload) => {
 
         const response = await checkoutPOS(requestData);
 
-        Swal.fire({
+        await Swal.fire({
             icon: "success",
             title: "Transaksi Berhasil",
             html: `
-        No:
-        ${response.data.reference_number}
-        <br><br>
-        Total:
-        Rp${rupiah(response.data.grand_total)}
-        <br><br>
-        Kembalian:
-        Rp${rupiah(response.data.change_amount)}
-    `,
+      No: ${response.data.reference_number}
+      <br><br>
+      Total: Rp${rupiah(response.data.grand_total)}
+      <br><br>
+      Kembalian: Rp${rupiah(response.data.change_amount)}
+   `,
         });
 
-        transactionCount.value++;
-
-        dailyRevenue.value += Number(response.data.grand_total);
-
         cartItems.value = [];
+
+        await loadSummary();
 
         await productGridRef.value.fetchProducts();
     } catch (error) {
         console.error(error);
 
         alert(error.response?.data?.message || "Checkout gagal");
+    } finally {
+        processing.value = false;
+    }
+};
+
+const loadSummary = async () => {
+    try {
+        const response = await getPosSummary();
+
+        transactionCount.value = response.data.transactions_today;
+
+        dailyRevenue.value = parseFloat(response.data.revenue_today || 0);
+    } catch (error) {
+        console.error(error);
     }
 };
 
@@ -159,4 +172,8 @@ const removeItem = (id) => {
 const grandTotal = computed(() =>
     cartItems.value.reduce((total, item) => total + item.price * item.qty, 0),
 );
+
+onMounted(() => {
+    loadSummary();
+});
 </script>

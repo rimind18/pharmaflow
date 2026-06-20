@@ -141,11 +141,11 @@ const routes = [
             },
 
             {
-                path: "daily-report",
-                name: "DailyReport",
-                component: () => import("@/pages/staff/DailyReport.vue"),
+                path: "reports",
+                name: "StaffReports",
+                component: () => import("@/pages/staff/Reports.vue"),
             },
-
+            
             // Inventory
             {
                 path: "medicines",

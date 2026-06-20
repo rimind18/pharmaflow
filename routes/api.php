@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\AdvancedOwnerAnalyticsController;
 use App\Http\Controllers\Api\AdvancedOwnerAnalyticsV2Controller;
 use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\V1\NotificationDashboardController;
+use App\Http\Controllers\Api\ReportController;
 
 
 Route::prefix('v1')->group(function () {
@@ -236,8 +237,8 @@ Route::prefix('v1')->group(function () {
             );
 
             Route::get(
-                'reports/daily',
-                [TransactionController::class, 'dailyReport']
+                'reports',
+                [ReportController::class, 'index']
             );
 
             // POS SEARCH
@@ -453,7 +454,14 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{id}', [StockOpnameController::class, 'show']);
             });
         });
-
+        Route::get(
+            '/dashboard/pos-summary',
+            [DashboardController::class, 'posSummary']
+        );
+        Route::get(
+            '/reports/transactions/export',
+            [TransactionReportController::class, 'export']
+        );
         // ============================================
         // OWNER ROUTES
         // ============================================

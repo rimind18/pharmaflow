@@ -110,8 +110,8 @@
                     </router-link>
 
                     <router-link
-                        to="/staff/daily-report"
-                        :class="menuClass('/staff/daily-report')"
+                        to="/staff/reports"
+                        :class="menuClass('/staff/reports')"
                     >
                         <ClipboardCheck />
                         <span>Laporan</span>
@@ -500,7 +500,7 @@ const currentPageTitle = computed(() => {
 
         transactions: "Riwayat Transaksi",
 
-        "daily-report": "Laporan Harian",
+        reports: "Laporan Staff",
 
         medicines: "Manajemen Obat",
 
