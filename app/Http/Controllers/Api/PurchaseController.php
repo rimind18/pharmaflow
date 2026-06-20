@@ -60,21 +60,22 @@ class PurchaseController extends Controller
                 'approved_by' => Auth::id(),
                 'approved_at' => now(),
             ]);
-
-            Notification::firstOrCreate(
-                [
-                    'user_id' => $purchase->created_by,
-                    'type' => 'purchase_approved',
-                    'title' => 'Purchase Approved'
-                ],
-                [
-                    'message' =>
-                    'PO ' . $purchase->po_number . ' has been approved',
-                    'severity' => 'info',
-                    'is_read' => false
-                ]
-            );
-
+            // Notification sementara dinonaktifkan
+/*
+Notification::firstOrCreate(
+    [
+        'user_id' => $purchase->created_by,
+        'type' => 'purchase_approved',
+        'title' => 'Purchase Approved'
+    ],
+    [
+        'message' =>
+        'PO ' . $purchase->po_number . ' has been approved',
+        'severity' => 'info',
+        'is_read' => false
+    ]
+);
+*/
             $purchase->refresh();
 
             return response()->json([

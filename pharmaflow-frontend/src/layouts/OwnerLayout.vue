@@ -189,6 +189,29 @@
             <span>🏭</span>
             <span>Suppliers</span>
           </router-link>
+       <div class="mt-6">
+  <p class="text-xs text-gray-400 uppercase mb-2">
+    REPORTS
+  </p>
+
+  <div class="flex flex-col gap-2">
+
+    <router-link
+      to="/owner/reports/purchases"
+      class="menu-item"
+    >
+      📄 Purchase Report
+    </router-link>
+
+    <router-link
+      to="/owner/reports/stock-mutations"
+      class="menu-item"
+    >
+      📦 Stock Mutation Report
+    </router-link>
+
+  </div>
+</div>
         </div>
 
         <!-- Management -->

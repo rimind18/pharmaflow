@@ -1,6 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+import PurchaseReport from '@/pages/owner/Reports/PurchaseReport.vue'
+import StockMutationReport from '@/pages/owner/Reports/StockMutationReport.vue'
+
 const routes = [
   // ========================================
   // AUTH ROUTES
@@ -322,7 +325,15 @@ const routes = [
             '@/pages/owner/Reports/ProfitReport.vue'
           ),
       },
-
+      {
+  path: '/owner/reports/stock-mutations',
+  component: StockMutationReport,
+  meta: {
+    requiresAuth: true,
+    role: 'owner'
+  }
+},
+      
       {
         path: 'reports/inventory',
         name: 'OwnerInventoryReport',
@@ -349,6 +360,11 @@ const routes = [
             '@/pages/owner/Reports/CashflowReport.vue'
           ),
       },
+      {
+  path: 'reports/purchases',
+  name: 'OwnerPurchaseReport',
+  component: PurchaseReport
+},
 
       {
         path: 'analytics',
@@ -393,6 +409,7 @@ const routes = [
             '@/pages/owner/Management/Warehouses.vue'
           ),
       },
+      
 
       {
         path: 'stocks',
