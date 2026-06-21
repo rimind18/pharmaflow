@@ -237,7 +237,7 @@ Route::prefix('v1')->group(function () {
             );
 
             Route::get(
-                'reports',
+                'reports/daily',
                 [ReportController::class, 'index']
             );
 
@@ -459,9 +459,13 @@ Route::prefix('v1')->group(function () {
             [DashboardController::class, 'posSummary']
         );
         Route::get(
-            '/reports/transactions/export',
-            [TransactionReportController::class, 'export']
+            '/reports/daily/export',
+            [ReportController::class, 'export']
         );
+        // Route::get(
+        //   '/reports/transactions/export',
+        // [TransactionReportController::class, 'export']
+        // );
         // ============================================
         // OWNER ROUTES
         // ============================================

@@ -5,7 +5,7 @@
         <div
             class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-8 text-white shadow-xl"
         >
-            <h1 class="text-4xl font-black">📦 Stock Opname</h1>
+            <h1 class="text-4xl font-black">Stock Opname</h1>
 
             <p class="mt-2 text-emerald-100">
                 Monitoring & pengecekan stok fisik apotek

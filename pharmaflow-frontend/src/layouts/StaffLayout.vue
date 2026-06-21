@@ -127,7 +127,7 @@
                         :class="menuClass('/staff/medicines')"
                     >
                         <Pill class="w-5 h-5" />
-                        <span>Obat</span>
+                        <span>Master Obat</span>
                     </router-link>
 
                     <router-link
@@ -143,7 +143,7 @@
                         :class="menuClass('/staff/stocks')"
                     >
                         <Package class="w-5 h-5" />
-                        <span>Stock Obat</span>
+                        <span>Persediaan</span>
                     </router-link>
 
                     <router-link

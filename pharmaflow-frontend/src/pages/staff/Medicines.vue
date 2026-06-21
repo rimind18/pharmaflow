@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="w-full min-h-screen bg-gray-50 p-6 overflow-x-auto">
   <div class="space-y-6 max-w-none w-full">
@@ -1888,4 +1887,4 @@ onMounted(async () => {
   }
 }
 </style>
-```
+
