@@ -211,7 +211,9 @@
                 class="px-7 py-6 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
             >
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-900">
+                    <h2
+                        class="text-xl font-bold text-slate-900 flex items-center gap-2"
+                    >
                         <Pill></Pill>Daftar Obat
                     </h2>
 

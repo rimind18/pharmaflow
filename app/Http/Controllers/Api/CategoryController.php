@@ -16,36 +16,43 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Category::query();
 
-            // Search
+            $query = Category::withCount('medicines');
+
             if ($request->has('search')) {
                 $search = $request->get('search');
-                $query->where('name', 'like', "%$search%")
-                      ->orWhere('description', 'like', "%$search%");
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
             }
 
-            // Filter active
             if ($request->has('is_active')) {
-                $query->where('is_active', $request->boolean('is_active'));
+                $query->where(
+                    'is_active',
+                    $request->boolean('is_active')
+                );
             }
 
-            // Pagination
             $perPage = $request->get('per_page', 15);
-            $categories = $query->paginate($perPage);
+
+            $categories = $query
+                ->latest()
+                ->paginate($perPage);
 
             return response()->json([
                 'message' => 'Data kategori berhasil diambil',
                 'data' => $categories
-            ], 200);
-
+            ]);
         } catch (\Exception $e) {
+
             return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
-
     /**
      * Store a newly created category
      */
@@ -70,7 +77,6 @@ class CategoryController extends Controller
                 'message' => 'Kategori berhasil dibuat',
                 'data' => $category
             ], 201);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validasi gagal',
@@ -91,7 +97,6 @@ class CategoryController extends Controller
                 'message' => 'Data kategori berhasil diambil',
                 'data' => $category
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Kategori tidak ditemukan'
@@ -126,7 +131,6 @@ class CategoryController extends Controller
                 'message' => 'Kategori berhasil diperbarui',
                 'data' => $category
             ], 200);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validasi gagal',
@@ -159,7 +163,6 @@ class CategoryController extends Controller
             return response()->json([
                 'message' => 'Kategori berhasil dihapus'
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Kategori tidak ditemukan'
