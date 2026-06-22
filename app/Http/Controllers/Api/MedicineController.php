@@ -150,7 +150,7 @@ class MedicineController extends Controller
     }
 }
 
-    /**
+/**
      * Store a newly created medicine
      */
     public function store(Request $request)
@@ -183,24 +183,30 @@ class MedicineController extends Controller
                 'expired_date' => $validated['expired_date'] ?? null,
                 'status' => 'aktif',
             ]);
+
+            // ==========================================
+            // 🌟 SINKRONISASI OTOMATIS: BUAT KERANJANG STOK
+            // ==========================================
+            Stock::create([
+                'medicine_id' => $medicine->id,
+                'warehouse_id' => 1, // ID 1 adalah Gudang Utama (Sesuaikan jika perlu)
+                'quantity' => 0,     // Stok otomatis diset 0 saat pertama kali dibuat
+            ]);
+
             $this->auditLogService
                 ->record(
-
                     'medicine_create',
-
                     Medicine::class,
-
                     $medicine->id,
-
                     null,
-
                     $medicine->toArray()
-
                 );
+
             return response()->json([
-                'message' => 'Obat berhasil dibuat',
+                'message' => 'Obat berhasil dibuat dan stok otomatis disiapkan',
                 'data' => $medicine->load('category', 'supplier')
             ], 201);
+            
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validasi gagal',

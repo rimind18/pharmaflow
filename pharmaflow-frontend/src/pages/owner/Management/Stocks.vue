@@ -12,8 +12,8 @@
         <input 
           v-model="searchQuery" 
           type="text" 
-          placeholder="Cari nama obat atau kode..." 
-          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          placeholder="Cari nama atau kode..." 
+          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm transition-all"
         >
         <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
       </div>
@@ -21,7 +21,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">💊</div>
+        <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">💊</div>
         <div>
           <p class="text-sm text-slate-500 font-bold">Total Baris Stok</p>
           <p class="text-2xl font-black text-slate-800">{{ stocks.length }}</p>
@@ -45,7 +45,7 @@
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-500 mb-4"></div>
         <p class="text-slate-500 font-medium">Memuat data inventaris...</p>
       </div>
 
@@ -66,7 +66,7 @@
               <td colspan="6" class="p-12 text-center text-slate-400">Tidak ada data stok yang ditemukan.</td>
             </tr>
             
-            <tr v-for="item in filteredStocks" :key="item.id" class="hover:bg-blue-50/30 transition group">
+            <tr v-for="item in filteredStocks" :key="item.id" class="hover:bg-emerald-50/30 transition group">
               <td class="p-4 text-xs font-mono font-bold text-slate-400">#STK-{{ item.id }}</td>
               <td class="p-4">
                 <span class="font-bold text-slate-800 block">{{ getMedName(item) }}</span>
@@ -84,7 +84,7 @@
                 <span v-else class="px-3 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-full text-xs">AMAN</span>
               </td>
               <td class="p-4 text-center">
-                <button @click="openModal(item)" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm">
+                <button @click="openModal(item)" class="px-4 py-1.5 bg-emerald-50 text-emerald-600 font-bold rounded-lg hover:bg-emerald-600 hover:text-white transition shadow-sm">
                   Sesuaikan
                 </button>
               </td>
@@ -94,54 +94,54 @@
       </div>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto relative animate-slideUp">
+    <div v-if="showModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative animate-slideUp">
         
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold text-slate-800">⚙️ Sesuaikan Stok</h2>
+          <h2 class="text-xl font-bold flex items-center gap-2 text-slate-800">
+            <span class="text-emerald-600 text-2xl font-black">⚙️</span>
+            Sesuaikan Stok Obat
+          </h2>
           <button @click="closeModal" class="text-slate-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
         </div>
         
-        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 mb-5 text-center">
-          <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Target Penyesuaian</p>
-          <p class="text-lg font-black text-slate-800">{{ getMedName(selectedStock) }}</p>
-          <p class="text-sm font-bold mt-1" :class="(selectedStock?.quantity || 0) === 0 ? 'text-rose-500' : 'text-emerald-600'">
-            Stok Saat Ini: {{ selectedStock?.quantity || 0 }} {{ getMedUnit(selectedStock) }}
-          </p>
-        </div>
-
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-bold text-slate-700 mb-2">Pilih Aksi</label>
-            <div class="grid grid-cols-2 gap-3">
-              <label class="relative flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all"
-                     :class="form.type === 'in' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'">
-                <input type="radio" v-model="form.type" value="in" class="hidden">
-                <span class="font-bold">➕ Tambah</span>
-              </label>
-              <label class="relative flex items-center justify-center p-3 border-2 rounded-xl cursor-pointer transition-all"
-                     :class="form.type === 'out' ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50'">
-                <input type="radio" v-model="form.type" value="out" class="hidden">
-                <span class="font-bold">➖ Kurangi</span>
-              </label>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Nama Obat Target</label>
+            <input type="text" :value="getMedName(selectedStock)" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Sisa Stok Saat Ini</label>
+              <input type="text" :value="`${selectedStock?.quantity || 0} ${getMedUnit(selectedStock)}`" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Jenis Penyesuaian <span class="text-red-500">*</span></label>
+              <select v-model="form.type" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                <option value="in">➕ Stok Masuk (Tambah)</option>
+                <option value="out">➖ Stok Keluar (Kurangi)</option>
+              </select>
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah yang disesuaikan <span class="text-red-500">*</span></label>
-            <input v-model.number="form.quantity" type="number" min="1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center text-xl font-black text-slate-700">
+            <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Qty) Penyesuaian <span class="text-red-500">*</span></label>
+            <input v-model.number="form.quantity" type="number" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
           </div>
 
           <div>
-            <label class="block text-sm font-bold text-slate-700 mb-1">Alasan Penyesuaian <span class="text-red-500">*</span></label>
-            <textarea v-model="form.notes" rows="2" placeholder="Cth: Barang datang, Expired, Rusak, dll" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none"></textarea>
+            <label class="block text-sm font-bold text-slate-700 mb-1">Keterangan / Alasan <span class="text-red-500">*</span></label>
+            <textarea v-model="form.notes" rows="3" placeholder="Cth: Barang datang, Expired, Rusak, dll" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
           </div>
         </div>
         
-        <div class="flex justify-end gap-3 mt-8">
-          <button @click="closeModal" class="px-5 py-2.5 font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition">Batal</button>
-          <button @click="submitStock" class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition w-full md:w-auto shadow-md">
-            Simpan Perubahan
+        <div class="flex justify-end gap-4 mt-8">
+          <button @click="closeModal" class="px-4 py-2 font-bold text-slate-600 hover:text-slate-800 transition">Batal</button>
+          <button @click="submitStock" :disabled="isSubmitting" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span v-if="isSubmitting" class="animate-spin">⏳</span>
+            <span v-else>💾</span>
+            {{ isSubmitting ? 'Menyimpan...' : 'Simpan Data' }}
           </button>
         </div>
 
@@ -157,12 +157,13 @@ import { ElMessage } from 'element-plus'
 
 const stocks = ref([])
 const loading = ref(false)
+const isSubmitting = ref(false)
 const searchQuery = ref('')
 const showModal = ref(false)
 const selectedStock = ref(null)
 
 const form = ref({
-  type: 'in', // 'in' = tambah, 'out' = kurangi
+  type: 'in', 
   quantity: 1,
   notes: ''
 })
@@ -192,7 +193,7 @@ const getWarehouseName = (item) => {
 
 const getStockMin = (item) => {
   if (item && item.medicine && item.medicine.stock_minimum) return Number(item.medicine.stock_minimum);
-  return 10; // Nilai default jika data kosong
+  return 10; 
 }
 
 const isOutOfStock = (item) => {
@@ -226,12 +227,12 @@ const filteredStocks = computed(() => {
 })
 
 // ==========================================
-// FUNGSI UTAMA (TIDAK BERUBAH DARI SEBELUMNYA)
+// FUNGSI UTAMA API
 // ==========================================
 const fetchStocks = async () => {
   loading.value = true
   try {
-    const response = await api.get('v1/stocks')
+    const response = await api.get('stocks')
     const rawData = response.data?.data
     stocks.value = (rawData && rawData.data) ? rawData.data : (rawData || [])
   } catch (error) {
@@ -266,6 +267,9 @@ const submitStock = async () => {
     return
   }
 
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+
   const currentStock = selectedStock.value?.quantity || 0;
   let newQuantity = currentStock;
 
@@ -277,6 +281,7 @@ const submitStock = async () => {
 
   if (newQuantity < 0) {
     ElMessage.error('Error: Stok akhir tidak boleh minus!');
+    isSubmitting.value = false;
     return;
   }
 
@@ -289,10 +294,10 @@ const submitStock = async () => {
   };
 
   try {
-    await api.post('v1/stocks/adjustment', payload);
+    await api.post('stocks/adjustment', payload);
     ElMessage.success('Sempurna! Stok berhasil diperbarui.');
     closeModal();
-    fetchStocks();
+    await fetchStocks();
   } catch (error) {
     console.error("DEBUG ERROR:", error.response?.data);
     const errors = error.response?.data?.errors;
@@ -301,8 +306,9 @@ const submitStock = async () => {
     if (errors) {
        errorMsg = Object.values(errors).flat().join('<br>');
     }
-    
     ElMessage({ message: errorMsg, type: 'error', dangerouslyUseHTMLString: true });
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
