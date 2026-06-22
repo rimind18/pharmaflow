@@ -9,44 +9,82 @@ use Illuminate\Validation\ValidationException;
 
 class VoucherController extends Controller
 {
-    /**
-     * Get all vouchers
-     */
-    public function index(Request $request)
-    {
-        try {
-            $query = Voucher::query();
+    
 
-            // Get only active
-            if (!$request->has('all')) {
-                $query->active();
-            }
+public function index(Request $request)
+{
+    try {
 
-            // Filter by status
-            if ($request->has('is_active')) {
-                $query->where('is_active', $request->boolean('is_active'));
-            }
+        $query = Voucher::query();
 
-            // Search
-            if ($request->has('search')) {
-                $search = $request->get('search');
-                $query->where('code', 'like', "%$search%")
-                      ->orWhere('description', 'like', "%$search%");
-            }
-
-            $vouchers = $query->orderBy('created_at', 'desc')->paginate(15);
-
-            return response()->json([
-                'message' => 'Data voucher berhasil diambil',
-                'data' => $vouchers
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+        // Status aktif / tidak aktif
+        if ($request->filled('is_active')) {
+            $query->where(
+                'is_active',
+                filter_var(
+                    $request->is_active,
+                    FILTER_VALIDATE_BOOLEAN
+                )
+            );
         }
+
+        // Expired
+        if ($request->status === 'expired') {
+            $query->whereDate(
+                'end_date',
+                '<',
+                now()
+            );
+        }
+
+        // Type
+        if ($request->filled('type')) {
+            $query->where(
+                'type',
+                $request->type
+            );
+        }
+
+        // Search
+        if ($request->filled('search')) {
+
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where(
+                    'code',
+                    'like',
+                    "%{$search}%"
+                )
+                ->orWhere(
+                    'description',
+                    'like',
+                    "%{$search}%"
+                );
+
+            });
+        }
+
+        $vouchers = $query
+            ->orderBy('created_at', 'desc')
+            ->paginate(
+                $request->per_page ?? 15
+            );
+
+        return response()->json([
+            'message' => 'Data voucher berhasil diambil',
+            'data' => $vouchers
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
+
     }
+}
 
     /**
      * Create voucher
@@ -120,6 +158,7 @@ class VoucherController extends Controller
      */
     public function update(Request $request, $id)
     {
+        \Log::info($request->all());
         try {
             $voucher = Voucher::findOrFail($id);
 
