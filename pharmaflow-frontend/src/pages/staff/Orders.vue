@@ -5,6 +5,13 @@
         <div
             class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl shadow-xl p-8 text-white"
         >
+            <div
+                class="absolute -right-1  w-48 h-48 rounded-full bg-white/10"
+            />
+
+            <div
+                class="absolute right-1 bottom-360 w-24 h-24 rounded-full bg-white/10"
+            />
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-4xl font-black">Manajemen Pesanan</h1>

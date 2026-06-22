@@ -4,13 +4,19 @@
         <section
             class="relative overflow-hidden rounded-[32px] border border-emerald-100 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-8 text-white shadow-xl"
         >
-            <div
-                class="absolute -right-10 -top-10 h-52 w-52 rounded-full bg-white/10 blur-3xl"
-            />
+           <div
+                        class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10"
+                    />
 
-            <div
-                class="absolute -bottom-16 -left-10 h-52 w-52 rounded-full bg-white/10 blur-3xl"
-            />
+                    <div
+                        class="absolute right-16 bottom-0 w-24 h-24 rounded-full bg-white/10"
+                    /><div
+                        class="absolute right-40 top-20 w-48 h-48 rounded-full bg-white/10"
+                    />
+
+                    <div
+                        class="absolute right-16 bottom-0 w-24 h-24 rounded-full bg-white/10"
+                    />
 
             <div
                 class="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between"

@@ -1,8 +1,16 @@
 <template>
     <div class="space-y-6">
         <div
-            class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl shadow-xl p-8 text-white"
+            class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 p-8 text-white"
         >
+            <div
+                class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10"
+            />
+
+            <div
+                class="absolute right-16 bottom-0 w-24 h-24 rounded-full bg-white/10"
+            />
+
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-white text-4xl font-black">
@@ -204,7 +212,7 @@
             >
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900">
-                        <Pill ></Pill>Daftar Obat
+                        <Pill></Pill>Daftar Obat
                     </h2>
 
                     <p class="text-slate-500 text-sm mt-1">
