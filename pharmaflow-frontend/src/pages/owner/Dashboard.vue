@@ -1,101 +1,39 @@
 <template>
-  <div class="space-y-8">
+  <div class="space-y-6 animate-fadeIn">
     <div>
-      <h1 class="text-3xl font-bold text-gray-800">📊 Dashboard</h1>
-      <p class="text-gray-500 mt-1">Ringkasan performa apotek Anda</p>
+      <h1 class="text-3xl font-bold text-slate-800">Dashboard Owner</h1>
+      <p class="text-slate-500 font-medium">Ringkasan performa apotek Anda secara real-time.</p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div class="flex gap-6 items-end">
-        <div class="flex-1">
-          <label class="block text-sm font-bold text-gray-700 mb-2">Dari Tanggal</label>
-          <input v-model="startDate" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-        </div>
-        <div class="flex-1">
-          <label class="block text-sm font-bold text-gray-700 mb-2">Sampai Tanggal</label>
-          <input v-model="endDate" type="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-        </div>
-        <button @click="fetchDashboardData" class="px-8 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-md">
-          🔍 Filter
-        </button>
-        <button @click="resetFilter" class="px-4 py-3 bg-gray-100 text-gray-600 font-bold rounded-lg hover:bg-gray-200 transition shadow-sm" title="Tampilkan Data Lifetime">
-          🔄 Reset
-        </button>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2">Dari Tanggal</label>
+        <input type="date" v-model="filters.start_date" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
       </div>
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2">Sampai Tanggal</label>
+        <input type="date" v-model="filters.end_date" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+      </div>
+      <button @click="fetchData" class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition shadow-sm">
+        Terapkan Filter
+      </button>
     </div>
 
-    <div v-if="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-green-600"></div>
-    </div>
+    <div v-if="loading" class="text-center py-20 text-emerald-600 font-bold">Memuat data dashboard...</div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-green-500 hover:shadow-md transition">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm font-bold text-gray-500 mb-1">Total Pendapatan</p>
-            <h3 class="text-3xl font-black text-green-600">Rp{{ formatPrice(stats.revenue || 0) }}</h3>
-          </div>
-          <span class="text-3xl">💰</span>
-        </div>
+    <div v-else class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard title="Total Pendapatan" :value="'Rp ' + formatPrice(stats.sales.total_revenue)" icon="💰" color="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard title="Total Pengeluaran" :value="'Rp ' + formatPrice(stats.financial.total_expenses)" icon="📉" color="text-rose-600" bg="bg-rose-50" />
+        <StatCard title="Profit Bersih" :value="'Rp ' + formatPrice(stats.financial.profit)" icon="🚀" color="text-blue-600" bg="bg-blue-50" />
+        <StatCard title="Margin Profit" :value="stats.financial.profit_margin" icon="📈" color="text-purple-600" bg="bg-purple-50" />
       </div>
 
-      <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-blue-500 hover:shadow-md transition">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm font-bold text-gray-500 mb-1">Total Pesanan</p>
-            <h3 class="text-3xl font-black text-blue-600">{{ stats.total_orders || 0 }}</h3>
-          </div>
-          <span class="text-3xl">📦</span>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-red-500 hover:shadow-md transition">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm font-bold text-gray-500 mb-1">Total Pengeluaran</p>
-            <h3 class="text-3xl font-black text-red-600">Rp{{ formatPrice(stats.expense || 0) }}</h3>
-          </div>
-          <span class="text-3xl">💸</span>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-purple-500 hover:shadow-md transition">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-sm font-bold text-gray-500 mb-1">Profit</p>
-            <h3 class="text-3xl font-black text-purple-600">Rp{{ formatPrice(stats.profit || 0) }}</h3>
-            <p class="text-xs font-semibold mt-2" :class="(stats.margin || 0) >= 0 ? 'text-green-500' : 'text-red-500'">
-              Margin: {{ (stats.margin || 0).toFixed(1) }}%
-            </p>
-          </div>
-          <span class="text-3xl">📈</span>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="!loading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
-        <div>
-          <p class="text-sm font-bold text-gray-500 mb-1">Total Produk</p>
-          <h3 class="text-4xl font-black text-blue-600">{{ stats.total_products || 0 }}</h3>
-        </div>
-        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-2xl">💊</div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
-        <div>
-          <p class="text-sm font-bold text-gray-500 mb-1">Stok Menipis</p>
-          <h3 class="text-4xl font-black text-orange-500">{{ stats.low_stock || 0 }}</h3>
-        </div>
-        <div class="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center text-2xl">⚠️</div>
-      </div>
-
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
-        <div>
-          <p class="text-sm font-bold text-gray-500 mb-1">Barang Expired</p>
-          <h3 class="text-4xl font-black text-red-600">{{ stats.expired_stock || 0 }}</h3>
-        </div>
-        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-2xl">🗑️</div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard title="Total Stok" :value="stats.inventory.total_stock + ' Pcs'" icon="📦" color="text-amber-600" bg="bg-amber-50" />
+        <StatCard title="Obat Menipis" :value="stats.inventory.low_stock_count" icon="⚠️" color="text-orange-600" bg="bg-orange-50" />
+        <StatCard title="Barang Expired" :value="stats.inventory.expired_count" icon="💀" color="text-red-600" bg="bg-red-50" />
+        <StatCard title="Total Obat" :value="stats.inventory.total_medicines" icon="💊" color="text-sky-600" bg="bg-sky-50" />
       </div>
     </div>
   </div>
@@ -104,39 +42,34 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
+import StatCard from '@/components/StatCard.vue' // Pastikan King punya komponen StatCard, kalau belum, buat di bawah
 
-const loading = ref(true)
-const startDate = ref('')
-const endDate = ref('')
-const stats = ref({})
+const loading = ref(false)
+const stats = ref({
+  sales: { total_revenue: 0 },
+  inventory: { total_stock: 0, low_stock_count: 0, expired_count: 0, total_medicines: 0 },
+  financial: { total_expenses: 0, profit: 0, profit_margin: '0%' },
+  orders: { pending: 0 }
+})
 
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('id-ID').format(price)
-}
+const filters = ref({
+  start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+  end_date: new Date().toISOString().split('T')[0]
+})
 
-const fetchDashboardData = async () => {
+const formatPrice = (val) => new Intl.NumberFormat('id-ID').format(val || 0)
+
+const fetchData = async () => {
   loading.value = true
   try {
-    const params = {}
-    if (startDate.value) params.start_date = startDate.value
-    if (endDate.value) params.end_date = endDate.value
-
-    const response = await api.get('dashboard/summary', { params })
-    stats.value = response.data.data || response.data || {}
-  } catch (error) {
-    console.error('Gagal mengambil data dashboard:', error)
+    const res = await api.get('dashboard/summary', { params: filters.value })
+    stats.value = res.data.data
+  } catch (e) {
+    console.error(e)
   } finally {
     loading.value = false
   }
 }
 
-const resetFilter = () => {
-  startDate.value = ''
-  endDate.value = ''
-  fetchDashboardData()
-}
-
-onMounted(() => {
-  fetchDashboardData()
-})
+onMounted(fetchData)
 </script>

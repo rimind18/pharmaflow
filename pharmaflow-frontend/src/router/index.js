@@ -285,7 +285,7 @@ const routes = [
     ],
   },
 
-  // ========================================
+// ========================================
   // OWNER ROUTES
   // ========================================
   {
@@ -312,59 +312,49 @@ const routes = [
         path: 'reports/sales',
         name: 'OwnerSalesReport',
         component: () =>
-          import(
-            '@/pages/owner/Reports/SalesReport.vue'
-          ),
+          import('@/pages/owner/Reports/SalesReport.vue'),
       },
 
       {
         path: 'reports/profit',
         name: 'OwnerProfitReport',
         component: () =>
-          import(
-            '@/pages/owner/Reports/ProfitReport.vue'
-          ),
+          import('@/pages/owner/Reports/ProfitReport.vue'),
       },
       {
-  path: '/owner/reports/stock-mutations',
-  component: StockMutationReport,
-  meta: {
-    requiresAuth: true,
-    role: 'owner'
-  }
-},
+        path: '/owner/reports/stock-mutations',
+        component: StockMutationReport,
+        meta: {
+          requiresAuth: true,
+          role: 'owner'
+        }
+      },
       
       {
         path: 'reports/inventory',
         name: 'OwnerInventoryReport',
         component: () =>
-          import(
-            '@/pages/owner/Reports/InventoryReport.vue'
-          ),
+          import('@/pages/owner/Reports/InventoryReport.vue'),
       },
 
       {
         path: 'reports/financial',
         name: 'FinancialReport',
         component: () =>
-          import(
-            '@/pages/owner/Reports/FinancialReport.vue'
-          ),
+          import('@/pages/owner/Reports/FinancialReport.vue'),
       },
 
       {
         path: 'reports/cashflow',
         name: 'CashflowReport',
         component: () =>
-          import(
-            '@/pages/owner/Reports/CashflowReport.vue'
-          ),
+          import('@/pages/owner/Reports/CashflowReport.vue'),
       },
       {
-  path: 'reports/purchases',
-  name: 'OwnerPurchaseReport',
-  component: PurchaseReport
-},
+        path: 'reports/purchases',
+        name: 'OwnerPurchaseReport',
+        component: PurchaseReport
+      },
 
       {
         path: 'analytics',
@@ -378,64 +368,73 @@ const routes = [
         path: 'medicines',
         name: 'OwnerMedicines',
         component: () =>
-          import(
-            '@/pages/owner/Management/Medicines.vue'
-          ),
+          import('@/pages/owner/Management/Medicines.vue'),
       },
 
       {
         path: 'categories',
         name: 'OwnerCategories',
         component: () =>
-          import(
-            '@/pages/owner/Management/Categories.vue'
-          ),
+          import('@/pages/owner/Management/Categories.vue'),
       },
 
       {
         path: 'suppliers',
         name: 'OwnerSuppliers',
         component: () =>
-          import(
-            '@/pages/owner/Management/Suppliers.vue'
-          ),
+          import('@/pages/owner/Management/Suppliers.vue'),
       },
 
       {
         path: 'warehouses',
         name: 'OwnerWarehouses',
         component: () =>
-          import(
-            '@/pages/owner/Management/Warehouses.vue'
-          ),
+          import('@/pages/owner/Management/Warehouses.vue'),
       },
-      
 
       {
         path: 'stocks',
         name: 'OwnerStocks',
         component: () =>
-          import(
-            '@/pages/owner/Management/Stocks.vue'
-          ),
+          import('@/pages/owner/Management/Stocks.vue'),
       },
 
       {
         path: 'purchases',
         name: 'OwnerPurchases',
         component: () =>
-          import(
-            '@/pages/owner/Management/Purchases.vue'
-          ),
+          import('@/pages/owner/Management/Purchases.vue'),
       },
 
       {
         path: 'notifications',
         name: 'OwnerNotifications',
         component: () =>
-          import(
-            '@/pages/owner/Notifications.vue'
-          ),
+          import('@/pages/owner/Notifications.vue'),
+      },
+
+      // ============================================================
+      // 🌟 RUTE GABUNGAN (NEMBAK KE FILE STAFF)
+      // ============================================================
+      {
+        path: 'vouchers',
+        name: 'OwnerVouchers',
+        component: () => import('@/pages/staff/Vouchers.vue'),
+      },
+      {
+        path: 'orders',
+        name: 'OwnerOrders',
+        component: () => import('@/pages/staff/Orders.vue'),
+      },
+      {
+        path: 'promotions',
+        name: 'OwnerPromotions',
+        component: () => import('@/pages/staff/Promotions.vue'),
+      },
+      {
+        path: 'employees',
+        name: 'OwnerEmployees',
+        component: () => import('@/pages/staff/Employees.vue'), // Pastikan file ini ada di folder staff
       },
     ],
   },

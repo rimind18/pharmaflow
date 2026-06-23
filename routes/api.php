@@ -144,11 +144,16 @@ Route::prefix('v1')->group(function () {
             Route::delete('cashflow/{id}', [CashflowController::class, 'destroy']);
         });
 
-        // ============================================
+// ============================================
         // OWNER ROUTES
         // ============================================
         Route::middleware('role:owner')->group(function () {
             
+            // 🌟 TAMBAHAN RUTE AGAR OWNER TIDAK KENA 404
+            Route::apiResource('vouchers', VoucherController::class);
+            Route::apiResource('promotions', PromotionController::class);
+            Route::apiResource('employees', EmployeeController::class);
+
             // 🌟 AKSES MUTLAK STOK UNTUK OWNER (KUNCI PENYELESAIAN MASALAH)
             Route::get('stocks', [StockController::class, 'index']);
             Route::get('stocks/{id}', [StockController::class, 'show']);
@@ -191,6 +196,7 @@ Route::prefix('v1')->group(function () {
             Route::get('reports/stock-mutations', [StockMutationReportController::class, 'index']);
             Route::get('/reports/purchases', [PurchaseReportController::class, 'index']);
             Route::get('reports/sales', [DashboardController::class, 'salesReport']);
+            Route::get('reports/sales/export', [DashboardController::class, 'exportSalesReport']);
             Route::get('reports/profit', [DashboardController::class, 'profitReport']);
             Route::get('reports/inventory', [DashboardController::class, 'inventoryReport']);
             Route::get('reports/profit-products', [ProfitAnalysisController::class, 'index']);

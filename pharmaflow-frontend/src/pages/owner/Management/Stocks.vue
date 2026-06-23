@@ -13,7 +13,7 @@
           v-model="searchQuery" 
           type="text" 
           placeholder="Cari nama atau kode..." 
-          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm transition-all"
+          class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
         >
         <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
       </div>
@@ -94,59 +94,62 @@
       </div>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative animate-slideUp">
+    <Teleport to="body">
+      <div v-if="showModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
         
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-xl font-bold flex items-center gap-2 text-slate-800">
-            <span class="text-emerald-600 text-2xl font-black">⚙️</span>
-            Sesuaikan Stok Obat
-          </h2>
-          <button @click="closeModal" class="text-slate-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
-        </div>
-        
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-bold text-slate-700 mb-1">Nama Obat Target</label>
-            <input type="text" :value="getMedName(selectedStock)" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto relative animate-slideUp">
+          
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold flex items-center gap-2 text-slate-800">
+              <span class="text-emerald-600 text-2xl font-black">➕</span>
+              Sesuaikan Stok Obat
+            </h2>
+            <button @click="closeModal" class="text-slate-400 hover:text-red-500 font-bold text-2xl leading-none">&times;</button>
           </div>
-
-          <div class="grid grid-cols-2 gap-4">
+          
+          <div class="space-y-4">
             <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">Sisa Stok Saat Ini</label>
-              <input type="text" :value="`${selectedStock?.quantity || 0} ${getMedUnit(selectedStock)}`" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
+              <label class="block text-sm font-bold text-slate-700 mb-1">Nama Obat Target</label>
+              <input type="text" :value="getMedName(selectedStock)" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Sisa Stok Saat Ini</label>
+                <input type="text" :value="`${selectedStock?.quantity || 0} ${getMedUnit(selectedStock)}`" disabled class="w-full px-4 py-2 border border-slate-200 bg-slate-50 text-slate-600 rounded-xl outline-none font-bold cursor-not-allowed">
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Jenis Penyesuaian <span class="text-red-500">*</span></label>
+                <select v-model="form.type" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                  <option value="in">➕ Tambah Stok (Barang Masuk)</option>
+                  <option value="out">➖ Kurangi Stok (Barang Keluar)</option>
+                </select>
+              </div>
+            </div>
+
             <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">Jenis Penyesuaian <span class="text-red-500">*</span></label>
-              <select v-model="form.type" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
-                <option value="in">➕ Stok Masuk (Tambah)</option>
-                <option value="out">➖ Stok Keluar (Kurangi)</option>
-              </select>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Qty) Penyesuaian <span class="text-red-500">*</span></label>
+              <input v-model.number="form.quantity" type="number" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Keterangan / Alasan <span class="text-red-500">*</span></label>
+              <textarea v-model="form.notes" rows="2" placeholder="Cth: Barang datang, Expired, Rusak, dll" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
             </div>
           </div>
-
-          <div>
-            <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Qty) Penyesuaian <span class="text-red-500">*</span></label>
-            <input v-model.number="form.quantity" type="number" min="1" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+          
+          <div class="flex justify-end gap-4 mt-8">
+            <button @click="closeModal" class="px-4 py-2 font-bold text-slate-600 hover:text-slate-800 transition">Batal</button>
+            <button @click="submitStock" :disabled="isSubmitting" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span v-if="isSubmitting" class="animate-spin">⏳</span>
+              <span v-else>💾</span>
+              {{ isSubmitting ? 'Menyimpan...' : 'Simpan Data' }}
+            </button>
           </div>
 
-          <div>
-            <label class="block text-sm font-bold text-slate-700 mb-1">Keterangan / Alasan <span class="text-red-500">*</span></label>
-            <textarea v-model="form.notes" rows="3" placeholder="Cth: Barang datang, Expired, Rusak, dll" class="w-full px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
-          </div>
         </div>
-        
-        <div class="flex justify-end gap-4 mt-8">
-          <button @click="closeModal" class="px-4 py-2 font-bold text-slate-600 hover:text-slate-800 transition">Batal</button>
-          <button @click="submitStock" :disabled="isSubmitting" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span v-if="isSubmitting" class="animate-spin">⏳</span>
-            <span v-else>💾</span>
-            {{ isSubmitting ? 'Menyimpan...' : 'Simpan Data' }}
-          </button>
-        </div>
-
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
