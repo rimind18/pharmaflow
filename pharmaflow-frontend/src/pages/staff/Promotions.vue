@@ -15,15 +15,14 @@
       <div class="flex gap-4">
         <div class="flex-1">
           <label class="block text-sm font-semibold mb-2">Status</label>
-          <select
-            v-model="filterStatus"
-            @change="fetchPromotions"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">Semua</option>
-            <option value="active">🔴 Aktif</option>
-            <option value="inactive">⚪ Tidak Aktif</option>
-          </select>
+         <select
+  v-model="filterStatus"
+  class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+>
+  <option value="">Semua</option>
+  <option value="active">Aktif</option>
+  <option value="inactive">Tidak Aktif</option>
+</select>
         </div>
 
         <div class="flex-1">
@@ -62,15 +61,18 @@
       >
         <div class="flex justify-between items-start mb-4">
           <div>
-            <p class="text-2xl font-bold text-yellow-600">{{ promotion.discount }}%</p>
+            <p class="text-2xl font-bold text-yellow-600">{{ promotion.type === 'percentage'
+    ? `${promotion.discount_value}%`
+    : formatCurrency(promotion.discount_value)
+}}</p>
             <p class="text-sm text-gray-600">Diskon</p>
           </div>
-          <span :class="[
-            'px-3 py-1 rounded-full text-white font-semibold text-sm',
-            promotion.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
-          ]">
-            {{ promotion.status === 'active' ? '🔴 Aktif' : '⚪ Tidak Aktif' }}
-          </span>
+         <span :class="[
+  'px-3 py-1 rounded-full text-white font-semibold text-sm',
+  promotion.is_active ? 'bg-green-500' : 'bg-gray-400'
+]">
+  {{ promotion.is_active ? '🔴 Aktif' : '⚪ Tidak Aktif' }}
+</span>
         </div>
 
         <h3 class="text-lg font-bold mb-2">{{ promotion.name }}</h3>
@@ -85,11 +87,17 @@
             <span class="text-gray-600">Berakhir:</span>
             <span class="font-semibold">{{ formatDate(promotion.end_date) }}</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-600">Min. Pembelian:</span>
-            <span class="font-semibold">Rp{{ formatPrice(promotion.minimum_purchase) }}</span>
-          </div>
-        </div>
+         <div class="flex justify-between">
+  <span class="text-gray-600">Min. Pembelian:</span>
+  <span class="font-semibold">
+    {{
+      Number(promotion.minimum_purchase) > 0
+        ? formatCurrency(promotion.minimum_purchase)
+        : 'Tidak ada'
+    }}
+  </span>
+</div>
+</div>
 
         <div class="flex gap-2">
           <button
@@ -144,7 +152,7 @@
             <div>
               <label class="block text-gray-700 font-semibold mb-2">Diskon (%) *</label>
               <input
-                v-model.number="form.discount"
+                v-model.number="form.discount_value"
                 type="number"
                 min="0"
                 max="100"
@@ -191,11 +199,11 @@
           <div>
             <label class="block text-gray-700 font-semibold mb-2">Status</label>
             <select
-              v-model="form.status"
+              v-model="form.is_active"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             >
-              <option value="active">🔴 Aktif</option>
-              <option value="inactive">⚪ Tidak Aktif</option>
+              <option :value="true">🔴 Aktif</option>
+              <option :value="false">⚪ Tidak Aktif</option>
             </select>
           </div>
 
@@ -238,15 +246,18 @@ const searchQuery = ref('')
 const form = ref({
   name: '',
   description: '',
-  discount: 0,
+  discount_value: 0,
   minimum_purchase: 0,
   start_date: '',
   end_date: '',
-  status: 'active',
+  is_active: true
 })
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('id-ID').format(price)
+}
+const formatCurrency = (price) => {
+  return new Intl.NumberFormat('id-ID').format(price || 0)
 }
 
 const formatDate = (date) => {
@@ -269,49 +280,73 @@ const fetchPromotions = async () => {
   }
 }
 
-const openForm = (promo = null) => {
-  if (promo) {
-    form.value = { ...promo }
-    editingId.value = promo.id
-  } else {
-    form.value = {
-      name: '',
-      description: '',
-      discount: 0,
-      minimum_purchase: 0,
-      start_date: '',
-      end_date: '',
-      status: 'active',
-    }
-    editingId.value = null
+const openForm = () => {
+  form.value = {
+    name: '',
+    description: '',
+    discount_value: 0,
+    minimum_purchase: 0,
+    start_date: '',
+    end_date: '',
+    is_active: true
   }
+
+  editingId.value = null
   showForm.value = true
 }
 
 const savePromotion = async () => {
   savingForm.value = true
+
   try {
+   const payload = {
+  name: form.value.name,
+  description: form.value.description,
+  type: 'percentage',
+  discount_value: form.value.discount_value,
+  minimum_purchase: form.value.minimum_purchase,
+  start_date: form.value.start_date,
+  end_date: form.value.end_date,
+  is_active: form.value.is_active,
+  max_quantity: null
+}
+console.log(payload)
+
     if (editingId.value) {
-      await api.put(`promotions/${editingId.value}`, form.value)
+      await api.put(`promotions/${editingId.value}`, payload)
       ElMessage.success('Promosi berhasil diperbarui')
     } else {
-      await api.post('promotions', form.value)
+      await api.post('promotions', payload)
       ElMessage.success('Promosi berhasil dibuat')
     }
 
     showForm.value = false
     fetchPromotions()
+
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || 'Gagal menyimpan promosi')
+    ElMessage.error(
+      error.response?.data?.message ||
+      'Gagal menyimpan promosi'
+    )
   } finally {
     savingForm.value = false
   }
 }
 
 const editPromotion = (promo) => {
-  openForm(promo)
-}
+  form.value = {
+    name: promo.name,
+    description: promo.description,
+    discount_value: promo.discount_value,
+    minimum_purchase: promo.minimum_purchase || 0,
+    start_date: promo.start_date,
+    end_date: promo.end_date,
+    is_active: Boolean(promo.is_active)
+  }
 
+  editingId.value = promo.id
+  showForm.value = true
+}
 const deletePromotion = async (id) => {
   try {
     await ElMessageBox.confirm(
