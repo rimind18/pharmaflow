@@ -262,6 +262,21 @@ class DashboardController extends Controller
             ], 500);
         }
     }
+    public function exportSalesReport(Request $request)
+{
+    // Menggunakan logik yang sama dengan salesReport
+    $request->merge(['period' => $request->get('period', 'daily')]);
+    
+    // Panggil fungsi salesReport untuk mendapatkan datanya
+    $reportData = $this->salesReport($request)->getData()->data;
+    
+    // Gunakan library Excel atau PDF sesuai standar proyek King
+    // Jika belum ada, gunakan ini sebagai placeholder sementara
+    return response()->json([
+        'message' => 'Fungsi export PDF/Excel siap dihubungkan!',
+        'data' => $reportData
+    ]);
+}
 
     /**
      * Profit Report
