@@ -357,6 +357,11 @@ Route::prefix('v1')->group(function () {
                 [OrderController::class, 'index']
             );
 
+            Route::post(
+    'purchases/{id}/ordered',
+    [PurchaseController::class, 'markOrdered']
+);
+
             Route::put(
                 'orders/{id}',
                 [OrderController::class, 'update']

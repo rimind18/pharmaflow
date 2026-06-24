@@ -34,8 +34,11 @@
           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua Status</option>
-          <option value="pending">⏳ Pending</option>
-          <option value="received">✅ Received</option>
+          <option value="draft">Draft</option>
+<option value="approved">Approved</option>
+<option value="ordered">Ordered</option>
+<option value="partial">Partial</option>
+<option value="received">Received</option>
         </select>
       </div>
 
@@ -90,12 +93,24 @@
               Rp{{ formatPrice(purchase.total_amount) }}
             </td>
             <td class="px-6 py-4">
-              <span :class="[
-                'px-3 py-1 rounded-full font-semibold text-white text-sm',
-                purchase.status === 'pending' ? 'bg-yellow-500' : 'bg-green-500'
-              ]">
-                {{ purchase.status === 'pending' ? '⏳ Pending' : '✅ Received' }}
-              </span>
+             <span
+  :class="{
+    'bg-gray-500': purchase.status === 'draft',
+    'bg-blue-500': purchase.status === 'approved',
+    'bg-orange-500': purchase.status === 'ordered',
+    'bg-yellow-500': purchase.status === 'partial',
+    'bg-green-500': purchase.status === 'received',
+  }"
+  class="px-3 py-1 rounded-full font-semibold text-white text-sm"
+>
+  {{
+    purchase.status === 'draft' ? '📝 Draft' :
+    purchase.status === 'approved' ? '✅ Approved' :
+    purchase.status === 'ordered' ? '🚚 Ordered' :
+    purchase.status === 'partial' ? '📦 Partial' :
+    '✔️ Received'
+  }}
+</span>
             </td>
             <td class="px-6 py-4 text-center">
               <div class="flex gap-2 justify-center">
@@ -104,16 +119,34 @@
                   class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
                 >
                   👁️ View
+
                 </button>
+
                 <button
-                  v-if="purchase.status === 'pending'"
+  v-if="purchase.status === 'approved'"
+  @click="markOrdered(purchase)"
+  class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm"
+>
+  🚚 Ordered
+</button>
+
+              <button
+  v-if="purchase.status === 'draft'"
+  @click="approvePurchase(purchase)"
+  class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
+>
+  ✅ Approve
+</button>
+
+                <button
+                  v-if="purchase.status === 'draft'"
                   @click="editPurchase(purchase)"
                   class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm"
                 >
                   ✏️ Edit
                 </button>
                 <button
-                  v-if="purchase.status === 'pending'"
+                  v-if="purchase.status === 'ordered' || purchase.status === 'partial'"
                   @click="openReceiveModal(purchase)"
                   class="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 transition text-sm"
                 >
@@ -155,9 +188,15 @@
           </div>
           <div>
             <p class="text-sm text-gray-600">Status</p>
-            <p :class="selectedPurchase.status === 'pending' ? 'text-yellow-600' : 'text-green-600'" class="font-bold">
-              {{ selectedPurchase.status === 'pending' ? '⏳ Pending' : '✅ Received' }}
-            </p>
+            <p class="font-bold">
+  {{
+    selectedPurchase.status === 'draft' ? '📝 Draft' :
+    selectedPurchase.status === 'approved' ? '✅ Approved' :
+    selectedPurchase.status === 'ordered' ? '🚚 Ordered' :
+    selectedPurchase.status === 'partial' ? '📦 Partial' :
+    '✔️ Received'
+  }}
+</p>
           </div>
         </div>
 
@@ -271,6 +310,47 @@
         </form>
       </div>
     </div>
+    <div
+  v-if="showCreateModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+>
+  <div class="bg-white p-6 rounded-lg w-full max-w-lg">
+    <h2 class="text-2xl font-bold mb-4">
+      ➕ Buat Pembelian
+    </h2>
+
+    <p>Form Purchase Create akan dibuat di sini.</p>
+
+    <button
+      @click="showCreateModal = false"
+      class="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
+    >
+      Tutup
+    </button>
+  </div>
+</div>
+<div
+  v-if="showEditModal"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+>
+  <div class="bg-white p-6 rounded-lg w-full max-w-lg">
+    <h2 class="text-2xl font-bold mb-4">
+      ✏️ Edit Pembelian
+    </h2>
+
+    <p>
+      Purchase:
+      {{ editingPurchase?.purchase_number }}
+    </p>
+
+    <button
+      @click="showEditModal = false"
+      class="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
+    >
+      Tutup
+    </button>
+  </div>
+</div>
   </div>
 </template>
 
@@ -287,6 +367,9 @@ const shelves = ref([])
 const loading = ref(false)
 const selectedPurchase = ref(null)
 const showReceiveModal = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const editingPurchase = ref(null)
 const receivingPurchase = ref(null)
 const filterSupplier = ref('')
 const filterStatus = ref('')
@@ -356,12 +439,46 @@ const fetchShelves = async () => {
 const viewDetail = (purchase) => {
   selectedPurchase.value = purchase
 }
+const approvePurchase = async (purchase) => {
+  try {
+    await api.post(`purchases/${purchase.id}/approve`)
+
+    ElMessage.success('Purchase berhasil di-approve')
+
+    fetchPurchases()
+  } catch (error) {
+    ElMessage.error(
+      error.response?.data?.message ||
+      'Gagal approve purchase'
+    )
+  }
+}
+
+const markOrdered = async (purchase) => {
+  try {
+    await api.post(`purchases/${purchase.id}/ordered`)
+
+    ElMessage.success('Purchase berhasil diubah menjadi Ordered')
+
+    fetchPurchases()
+  } catch (error) {
+    ElMessage.error(
+      error.response?.data?.message ||
+      'Gagal update status ordered'
+    )
+  }
+}
+
 
 const editPurchase = (purchase) => {
-  ElMessage.info('Fitur edit pembelian akan segera tersedia')
+  editingPurchase.value = purchase
+  showEditModal.value = true
 }
 
 const openReceiveModal = (purchase) => {
+  purchase.items.forEach(item => {
+  item.quantity_received = 0
+})
   receivingPurchase.value = purchase
   showReceiveModal.value = true
   receiveForm.value = {
@@ -370,8 +487,9 @@ const openReceiveModal = (purchase) => {
   }
 }
 
+
 const openForm = () => {
-  ElMessage.info('Fitur buat pembelian akan segera tersedia')
+  showCreateModal.value = true
 }
 
 const receivePurchase = async () => {

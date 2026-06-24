@@ -190,6 +190,12 @@ const routes = [
             },
 
             {
+    path: "purchases",
+    name: "Purchases",
+    component: () => import("@/pages/staff/Purchases.vue"),
+},
+
+            {
                 path: "/staff/stock-opname",
                 name: "staff-stock-opname",
                 component: () => import("@/pages/staff/StockOpname.vue"),
