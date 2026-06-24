@@ -40,9 +40,13 @@
           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua</option>
-          <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-            {{ emp.name }}
-          </option>
+         <option
+  v-for="emp in employees"
+  :key="emp.id"
+  :value="emp.id"
+>
+  {{ emp.user?.name || emp.employee_id }}
+</option>
         </select>
       </div>
 
@@ -116,7 +120,7 @@
         <tbody class="divide-y">
           <tr v-for="att in attendances" :key="att.id" class="hover:bg-gray-50">
             <td class="px-6 py-4">{{ formatDate(att.attendance_date) }}</td>
-            <td class="px-6 py-4 font-semibold">{{ att.employee?.name }}</td>
+            <td class="px-6 py-4 font-semibold">{{ att.employee?.name || att.employee?.user?.name || '-' }}</td>
             <td class="px-6 py-4">
               <span :class="[
                 'px-3 py-1 rounded-full font-semibold text-white text-sm',
@@ -125,8 +129,13 @@
                 {{ getStatusLabel(att.status) }}
               </span>
             </td>
-            <td class="px-6 py-4 text-sm">{{ att.check_in_time ? formatTime(att.check_in_time) : '-' }}</td>
-            <td class="px-6 py-4 text-sm">{{ att.check_out_time ? formatTime(att.check_out_time) : '-' }}</td>
+          <td class="px-6 py-4 text-sm">
+  {{ formatTime(att.check_in) }}
+</td>
+
+<td class="px-6 py-4 text-sm">
+  {{ formatTime(att.check_out) }}
+</td>
             <td class="px-6 py-4 text-sm">{{ att.notes || '-' }}</td>
             <td class="px-6 py-4 text-center">
               <button
@@ -222,7 +231,7 @@ const employees = ref([])
 const loading = ref(false)
 const savingForm = ref(false)
 const showEditForm = ref(false)
-const startDate = ref(dayjs().startOfMonth().format('YYYY-MM-DD'))
+const startDate = ref(dayjs().startOf('month').format('YYYY-MM-DD'))
 const endDate = ref(dayjs().format('YYYY-MM-DD'))
 const filterEmployee = ref('')
 const filterStatus = ref('')
@@ -239,7 +248,12 @@ const formatDate = (date) => {
 }
 
 const formatTime = (time) => {
-  return dayjs(time).format('HH:mm')
+  if (!time) return '-'
+
+  return new Date(time).toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 const getStatusColor = (status) => {
@@ -274,8 +288,16 @@ const fetchAttendance = async () => {
     if (filterStatus.value) params.status = filterStatus.value
 
     const response = await api.get('attendance', { params })
-    attendances.value = response.data.data.data || []
-    summary.value = response.data.summary || {}
+
+console.log('FULL RESPONSE', response.data)
+console.log('ATTENDANCES', response.data.data.data)
+
+attendances.value = response.data.data.data || []
+
+console.log('AFTER SET', attendances.value)
+console.log('TOTAL', attendances.value.length)
+
+summary.value = response.data.summary || {}
   } catch (error) {
     ElMessage.error('Gagal memuat kehadiran')
   } finally {
@@ -300,12 +322,13 @@ const editAttendance = (attendance) => {
 const saveAttendance = async () => {
   savingForm.value = true
   try {
-    await api.post(`attendance/mark`, {
-      employee_id: editingAttendance.value.employee_id,
-      attendance_date: editingAttendance.value.attendance_date,
-      status: editingAttendance.value.status,
-      notes: editingAttendance.value.notes,
-    })
+    await api.put(
+  `attendance/${editingAttendance.value.id}`,
+  {
+    status: editingAttendance.value.status,
+    notes: editingAttendance.value.notes
+  }
+)
 
     ElMessage.success('Kehadiran berhasil diperbarui')
     showEditForm.value = false
@@ -317,8 +340,18 @@ const saveAttendance = async () => {
   }
 }
 
-const markAttendanceToday = () => {
-  ElMessage.info('Fitur absen otomatis akan segera tersedia')
+const markAttendanceToday = async () => {
+  try {
+    const response = await api.post('attendance/today')
+
+    ElMessage.success(response.data.message)
+
+    await fetchAttendance()
+  } catch (error) {
+    ElMessage.error(
+      error?.response?.data?.message || 'Gagal melakukan absen'
+    )
+  }
 }
 
 onMounted(() => {

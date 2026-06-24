@@ -258,6 +258,11 @@ Route::prefix('v1')->group(function () {
                 [AttendanceController::class, 'checkOut']
             );
 
+            Route::post(
+                '/attendance/today', 
+                [AttendanceController::class, 'markToday']
+                );
+
             Route::apiResource(
                 'attendance',
                 AttendanceController::class
@@ -272,6 +277,7 @@ Route::prefix('v1')->group(function () {
                 'attendance/monthly-report',
                 [AttendanceController::class, 'monthlyReport']
             );
+
 
             // MASTER DATA
             Route::apiResource(

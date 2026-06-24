@@ -10,55 +10,43 @@
       </button>
     </div>
 
-    <!-- Search & Filter -->
-    <div class="bg-white rounded-lg shadow-md p-4 grid grid-cols-4 gap-4">
-      <div>
-        <label class="block text-sm font-semibold mb-2">Cari</label>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Nama / Email"
-          @keyup.enter="fetchEmployees"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-      </div>
+   <!-- Search & Filter -->
+<div class="bg-white rounded-lg shadow-md p-4 grid grid-cols-3 gap-4">
 
-      <div>
-        <label class="block text-sm font-semibold mb-2">Status</label>
-        <select
-          v-model="filterStatus"
-          @change="fetchEmployees"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">Semua</option>
-          <option value="aktif">✅ Aktif</option>
-          <option value="tidak_aktif">❌ Tidak Aktif</option>
-        </select>
-      </div>
+  <div>
+    <label class="block text-sm font-semibold mb-2">Cari</label>
+    <input
+      v-model="searchQuery"
+      type="text"
+      placeholder="Nama / Email"
+      @keyup.enter="fetchEmployees"
+      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+    />
+  </div>
 
-      <div>
-        <label class="block text-sm font-semibold mb-2">Departemen</label>
-        <select
-          v-model="filterDepartment"
-          @change="fetchEmployees"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">Semua</option>
-          <option value="kasir">Kasir</option>
-          <option value="inventory">Inventory</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
+  <div>
+    <label class="block text-sm font-semibold mb-2">Status</label>
+    <select
+  v-model="filterStatus"
+  @change="fetchEmployees"
+  class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+>
+  <option value="">Semua</option>
+  <option value="aktif">✅ Aktif</option>
+  <option value="tidak_aktif">❌ Tidak Aktif</option>
+</select>
+  </div>
 
-      <div class="flex items-end">
-        <button
-          @click="fetchEmployees"
-          class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
-        >
-          🔍 Cari
-        </button>
-      </div>
-    </div>
+  <div class="flex items-end">
+    <button
+      @click="fetchEmployees"
+      class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+    >
+      🔍 Cari
+    </button>
+  </div>
+
+</div>
 
     <!-- Loading -->
     <div v-if="loading" class="text-center py-8">
@@ -84,25 +72,25 @@
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                  {{ employee.name.charAt(0).toUpperCase() }}
+                  {{ employee.user?.name?.charAt(0).toUpperCase() || '?' }}
                 </div>
-                <p class="font-semibold">{{ employee.name }}</p>
+                <p class="font-semibold">{{ employee.user?.name || '-' }}</p>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm">{{ employee.email }}</td>
-            <td class="px-6 py-4 text-sm">{{ employee.phone }}</td>
+            <td class="px-6 py-4 text-sm">{{ employee.user?.email || '-' }}</td>
+            <td class="px-6 py-4 text-sm">{{ employee.user?.phone || '-' }}</td>
             <td class="px-6 py-4">
               <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                {{ getDepartmentLabel(employee.department) }}
-              </span>
+  {{ employee.position || '-' }}
+</span>
             </td>
             <td class="px-6 py-4">
               <span :class="[
-                'px-3 py-1 rounded-full font-semibold text-white text-sm',
-                employee.is_active ? 'bg-green-500' : 'bg-red-500'
-              ]">
-                {{ employee.is_active ? '✅ Aktif' : '❌ Tidak Aktif' }}
-              </span>
+  'px-3 py-1 rounded-full font-semibold text-white text-sm',
+  employee.user?.is_active ? 'bg-green-500' : 'bg-red-500'
+]">
+  {{ employee.user?.is_active ? '✅ Aktif' : '❌ Tidak Aktif' }}
+</span>
             </td>
             <td class="px-6 py-4 text-sm">{{ formatDate(employee.created_at) }}</td>
             <td class="px-6 py-4 text-center">
@@ -187,6 +175,40 @@
               </select>
             </div>
           </div>
+
+          <div class="grid grid-cols-2 gap-4">
+
+  <div>
+    <label class="block text-gray-700 font-semibold mb-2">
+      Posisi *
+    </label>
+
+    <select
+      v-model="form.position"
+      class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+      required
+    >
+      <option value="">Pilih Posisi</option>
+      <option value="Kasir">Kasir</option>
+      <option value="Apoteker">Apoteker</option>
+      <option value="Admin">Admin</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-gray-700 font-semibold mb-2">
+      Tanggal Bergabung *
+    </label>
+
+    <input
+      type="date"
+      v-model="form.hire_date"
+      class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+      required
+    />
+  </div>
+
+</div>
 
           <div>
             <label class="block text-gray-700 font-semibold mb-2">Alamat</label>
@@ -279,11 +301,16 @@ const form = ref({
   email: '',
   phone: '',
   department: '',
+
+  position: '',
+  hire_date: '',
+
   address: '',
   city: '',
   province: '',
   password: '',
   is_active: true,
+  status: 'aktif'
 })
 
 const formatDate = (date) => {
@@ -301,64 +328,137 @@ const getDepartmentLabel = (dept) => {
 
 const fetchEmployees = async () => {
   loading.value = true
-  try {
-    const params = { per_page: 100 }
-    if (searchQuery.value) params.search = searchQuery.value
-    if (filterStatus.value) params.is_active = filterStatus.value === 'aktif'
-    if (filterDepartment.value) params.department = filterDepartment.value
 
-    const response = await api.get('employees', { params })
+  try {
+    const params = {
+      per_page: 100
+    }
+
+    // Search
+    if (searchQuery.value) {
+      params.search = searchQuery.value
+    }
+
+    // Status filter
+    if (filterStatus.value) {
+      params.status = filterStatus.value
+    }
+
+    // Position filter
+    if (filterDepartment.value) {
+      params.position = filterDepartment.value
+    }
+
+    const response = await api.get('/employees', {
+      params
+    })
+
+    console.log('DATA EMPLOYEES', response.data)
+
     employees.value = response.data.data.data || []
+
   } catch (error) {
-    ElMessage.error('Gagal memuat karyawan')
+    console.error(error)
+
+    ElMessage.error(
+      error.response?.data?.message ||
+      'Gagal memuat karyawan'
+    )
   } finally {
     loading.value = false
   }
 }
 
 const openForm = (employee = null) => {
+
+console.log(employee)
+
   if (employee) {
-    form.value = { ...employee }
+
     editingId.value = employee.id
-  } else {
+
     form.value = {
-      name: '',
-      email: '',
-      phone: '',
-      department: '',
-      address: '',
-      city: '',
-      province: '',
-      password: '',
-      is_active: true,
+      ...employee,
+      name: employee.user?.name || '',
+      email: employee.user?.email || '',
+      phone: employee.user?.phone || '',
+      address: employee.user?.address || '',
+      city: employee.user?.city || '',
+      province: employee.user?.province || '',
+      is_active: employee.user?.is_active ?? true,
+
+      position: employee.position || '',
+      hire_date: employee.hire_date
+        ? employee.hire_date.substring(0, 10)
+        : ''
     }
+  } else {
     editingId.value = null
+    resetForm()
   }
+
   showForm.value = true
 }
 
 const saveEmployee = async () => {
+  console.log('EDITING ID =', editingId.value)
+
   savingForm.value = true
+
   try {
     const data = { ...form.value }
+
     if (editingId.value && !data.password) {
       delete data.password
     }
 
     if (editingId.value) {
-      await api.put(`employees/${editingId.value}`, data)
+      console.log('UPDATE MODE')
+
+      await api.put(
+        `/employees/${editingId.value}`,
+        data
+      )
+
       ElMessage.success('Karyawan berhasil diperbarui')
     } else {
-      await api.post('employees', data)
+      console.log('CREATE MODE')
+
+      await api.post('/employees', data)
+
       ElMessage.success('Karyawan berhasil ditambahkan')
     }
 
     showForm.value = false
-    fetchEmployees()
+
+    await fetchEmployees()
+
   } catch (error) {
-    ElMessage.error(error.response?.data?.message || 'Gagal menyimpan karyawan')
+    console.log(error.response?.data)
+
+    ElMessage.error(
+      error.response?.data?.message ||
+      'Gagal menyimpan karyawan'
+    )
   } finally {
     savingForm.value = false
+  }
+}
+
+const resetForm = () => {
+  form.value = {
+    name: '',
+    email: '',
+    phone: '',
+    department: '',
+    position: '',
+    hire_date: '',
+    address: '',
+    city: '',
+    province: '',
+    password: '',
+    is_active: true,
+    status: 'aktif'
   }
 }
 
@@ -375,7 +475,7 @@ const deleteEmployee = async (id) => {
     )
 
     await api.delete(`employees/${id}`)
-    ElMessage.success('Karyawan berhasil dihapus')
+    ElMessage.success('Karyawan berhasil dinonaktifkan')
     fetchEmployees()
   } catch (error) {
     if (error !== 'cancel') {

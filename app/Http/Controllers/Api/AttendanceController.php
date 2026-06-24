@@ -17,51 +17,61 @@ class AttendanceController extends Controller
      * Get attendance records
      */
     public function index(Request $request)
-    {
-        try {
-            $query = Attendance::with('employee.user');
+{
+    try {
+        $query = Attendance::with('employee.user');
 
-            // Filter by employee
-            if ($request->has('employee_id')) {
-                $query->where('employee_id', $request->get('employee_id'));
-            }
-
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->get('status'));
-            }
-
-            // Filter by date range
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $query->whereBetween('attendance_date', [
-                    $request->get('start_date'),
-                    $request->get('end_date')
-                ]);
-            }
-
-            // This month
-            if ($request->boolean('this_month')) {
-                $query->thisMonth();
-            }
-
-            // Order
-            $query->orderBy('attendance_date', 'desc');
-
-            // Pagination
-            $perPage = $request->get('per_page', 30);
-            $attendance = $query->paginate($perPage);
-
-            return response()->json([
-                'message' => 'Data kehadiran berhasil diambil',
-                'data' => $attendance
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+        // Filter by employee
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
         }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('attendance_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        }
+
+        // This month
+        if ($request->boolean('this_month')) {
+            $query->thisMonth();
+        }
+
+        // Order
+        $query->orderBy('attendance_date', 'desc');
+
+        // Pagination
+        $perPage = $request->get('per_page', 30);
+        $attendance = $query->paginate($perPage);
+
+        // Summary
+        $summary = [
+            'hadir' => Attendance::where('status', 'hadir')->count(),
+            'alfa'  => Attendance::whereIn('status', ['alfa', 'alpha'])->count(),
+            'sakit' => Attendance::where('status', 'sakit')->count(),
+            'izin'  => Attendance::where('status', 'izin')->count(),
+        ];
+
+        return response()->json([
+            'message' => 'Data kehadiran berhasil diambil',
+            'data' => $attendance,
+            'summary' => $summary
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+        ], 500);
     }
+}
+    
 
     /**
      * Check in
@@ -299,7 +309,51 @@ class AttendanceController extends Controller
             ], 400);
         }
     }
+    public function markToday(Request $request)
+{
+    try {
+        $user = auth()->user();
 
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        if (!$employee) {
+            return response()->json([
+                'message' => 'Data karyawan tidak ditemukan'
+            ], 404);
+        }
+
+        $today = now()->toDateString();
+
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->whereDate('attendance_date', $today)
+            ->first();
+
+        if ($attendance) {
+            return response()->json([
+                'message' => 'Anda sudah absen hari ini'
+            ], 422);
+        }
+
+        $attendance = Attendance::create([
+            'employee_id' => $employee->id,
+            'attendance_date' => $today,
+            'check_in' => now(),
+            'status' => 'hadir',
+            'notes' => 'Absen dari dashboard staff'
+        ]);
+
+        return response()->json([
+            'message' => 'Absen berhasil',
+            'data' => $attendance
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+    
     /**
      * Get monthly attendance report
      */
