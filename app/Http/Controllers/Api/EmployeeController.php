@@ -34,11 +34,13 @@ class EmployeeController extends Controller
             if ($request->has('position')) {
                 $query->where('position', $request->get('position'));
             }
-
-            // Filter by status
-            if ($request->has('status')) {
-                $query->where('status', $request->get('status'));
-            }
+            
+// Filter by status
+if ($request->filled('status')) {
+    $query->where('status', $request->status);
+} else {
+    $query->where('status', '!=', 'resign');
+}
 
             // Pagination
             $perPage = $request->get('per_page', 15);
@@ -73,22 +75,20 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string',
-                'email' => 'required|email|unique:users',
-                'phone' => 'required|string|unique:users',
-                'password' => 'required|string|min:6',
-                'position' => 'required|string',
-                'hire_date' => 'required|date',
-                'birth_date' => 'nullable|date',
-                'id_number' => 'nullable|string',
-                'bank_account' => 'nullable|string',
-                'base_salary' => 'nullable|numeric|min:0',
-                'address' => 'nullable|string',
-                'city' => 'nullable|string',
-                'province' => 'nullable|string',
-                'postal_code' => 'nullable|string',
-            ]);
+           $validated = $request->validate([
+    'name' => 'nullable|string',
+   'email' => 'required|email|unique:users,email',
+'phone' => 'required|string|unique:users,phone',
+
+    'position' => 'nullable|string',
+    'birth_date' => 'nullable|date',
+
+    'address' => 'nullable|string',
+    'city' => 'nullable|string',
+    'province' => 'nullable|string',
+
+    'is_active' => 'nullable|boolean',
+]);
 
             DB::beginTransaction();
 
@@ -177,63 +177,84 @@ class EmployeeController extends Controller
      * Update employee
      */
     public function update(Request $request, $id)
-    {
-        try {
-            $employee = Employee::with('user')->findOrFail($id);
+{
+    try {
+        $employee = Employee::with('user')->findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'nullable|string',
-                'email' => 'nullable|email|unique:users,email,' . $employee->user_id,
-                'phone' => 'nullable|string|unique:users,phone,' . $employee->user_id,
-                'position' => 'nullable|string',
-                'birth_date' => 'nullable|date',
-                'id_number' => 'nullable|string',
-                'bank_account' => 'nullable|string',
-                'base_salary' => 'nullable|numeric|min:0',
-                'status' => 'nullable|in:aktif,tidak_aktif,cuti,resign',
-                'address' => 'nullable|string',
-                'city' => 'nullable|string',
-                'province' => 'nullable|string',
-                'postal_code' => 'nullable|string',
-            ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
 
-            // Update user data
-            $employee->user->update([
-                'name' => $validated['name'] ?? $employee->user->name,
-                'email' => $validated['email'] ?? $employee->user->email,
-                'phone' => $validated['phone'] ?? $employee->user->phone,
-                'address' => $validated['address'] ?? $employee->user->address,
-                'city' => $validated['city'] ?? $employee->user->city,
-                'province' => $validated['province'] ?? $employee->user->province,
-                'postal_code' => $validated['postal_code'] ?? $employee->user->postal_code,
-            ]);
+            'email' => 'required|email|unique:users,email,' . $employee->user_id,
 
-            // Update employee data
-            $employee->update([
-                'position' => $validated['position'] ?? $employee->position,
-                'birth_date' => $validated['birth_date'] ?? $employee->birth_date,
-                'id_number' => $validated['id_number'] ?? $employee->id_number,
-                'bank_account' => $validated['bank_account'] ?? $employee->bank_account,
-                'base_salary' => $validated['base_salary'] ?? $employee->base_salary,
-                'status' => $validated['status'] ?? $employee->status,
-            ]);
+            'phone' => 'required|string|max:20|unique:users,phone,' . $employee->user_id,
 
-            return response()->json([
-                'message' => 'Data karyawan berhasil diperbarui',
-                'data' => $employee->load('user')
-            ], 200);
+            'position' => 'required|string|max:100',
 
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Karyawan tidak ditemukan'
-            ], 404);
+            'hire_date' => 'required|date',
+
+            'birth_date' => 'nullable|date',
+            'id_number' => 'nullable|string',
+            'bank_account' => 'nullable|string',
+            'base_salary' => 'nullable|numeric|min:0',
+
+            'status' => 'nullable|in:aktif,tidak_aktif,cuti,resign',
+
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'province' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+
+            'password' => 'nullable|min:6',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        // update user
+        $userData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'province' => $validated['province'] ?? null,
+            'postal_code' => $validated['postal_code'] ?? null,
+            'is_active' => $validated['is_active']
+    ?? $employee->user->is_active,
+        ];
+
+        if (!empty($validated['password'])) {
+            $userData['password'] = bcrypt($validated['password']);
         }
+
+        $employee->user->update($userData);
+
+        // update employee
+        $employee->update([
+            'position' => $validated['position'],
+            'hire_date' => $validated['hire_date'],
+            'birth_date' => $validated['birth_date'] ?? null,
+            'id_number' => $validated['id_number'] ?? null,
+            'bank_account' => $validated['bank_account'] ?? null,
+            'base_salary' => $validated['base_salary'] ?? 0,
+            'status' => isset($validated['is_active'])
+    ? ($validated['is_active'] ? 'aktif' : 'tidak_aktif')
+    : $employee->status,
+        ]);
+
+        return response()->json([
+            'message' => 'Data karyawan berhasil diperbarui',
+            'data' => $employee->fresh()->load('user')
+        ]);
+    } catch (ValidationException $e) {
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Delete employee
@@ -248,8 +269,8 @@ class EmployeeController extends Controller
             $employee->user->update(['is_active' => false]);
 
             return response()->json([
-                'message' => 'Karyawan berhasil dihapus'
-            ], 200);
+    'message' => 'Karyawan berhasil dinonaktifkan'
+], 200);
 
         } catch (\Exception $e) {
             return response()->json([

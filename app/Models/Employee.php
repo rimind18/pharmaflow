@@ -44,6 +44,12 @@ class Employee extends Model
     {
         return $this->belongsTo(User::class);
     }
+    protected $appends = ['name'];
+
+public function getNameAttribute()
+{
+    return $this->user?->name;
+}
 
 
     public function attendance()

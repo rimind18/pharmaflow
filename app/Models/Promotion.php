@@ -10,17 +10,18 @@ class Promotion extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'description',
-        'type',
-        'discount_value',
-        'medicine_id',
-        'start_date',
-        'end_date',
-        'max_quantity',
-        'is_active',
-        'usage_count'
-    ];
+    'name',
+    'description',
+    'type',
+    'discount_value',
+    'minimum_purchase',
+    'medicine_id',
+    'start_date',
+    'end_date',
+    'max_quantity',
+    'is_active',
+    'usage_count'
+];
 
     protected $casts = [
         'discount_value' => 'decimal:2',

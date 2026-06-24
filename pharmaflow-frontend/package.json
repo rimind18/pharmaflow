@@ -14,8 +14,10 @@
     "dayjs": "^1.11.20",
     "element-plus": "^2.14.0",
     "leaflet": "^1.9.4",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "qrcode.vue": "^3.9.1",
+    "sweetalert2": "^11.26.25",
     "vue": "^3.5.34",
     "vue-chartjs": "^5.3.3",
     "vue-router": "^5.0.7"

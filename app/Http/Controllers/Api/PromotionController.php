@@ -18,11 +18,15 @@ class PromotionController extends Controller
     {
         try {
             $query = Promotion::with('medicine');
+            $status = $request->get('status');
+
+if ($status === 'active') {
+    $query->where('is_active', true);
+} elseif ($status === 'inactive') {
+    $query->where('is_active', false);
+}
 
             // Get only active
-            if (!$request->has('all')) {
-                $query->active();
-            }
 
             // Filter by medicine
             if ($request->has('medicine_id')) {
@@ -56,29 +60,28 @@ class PromotionController extends Controller
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string',
-                'description' => 'nullable|string',
-                'type' => 'required|in:percentage,fixed',
-                'discount_value' => 'required|numeric|min:0',
-                'medicine_id' => 'nullable|exists:medicines,id',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after:start_date',
-                'max_quantity' => 'nullable|integer|min:1',
-            ]);
+      $validated = $request->validate([
+    'name' => 'required|string',
+    'description' => 'nullable|string',
+    'type' => 'required|in:percentage,fixed',
+    'discount_value' => 'required|numeric|min:0',
+    'minimum_purchase' => 'nullable|numeric|min:0',
+    'start_date' => 'required|date',
+    'end_date' => 'required|date|after:start_date',
+    'max_quantity' => 'nullable|integer|min:1',
+    'is_active' => 'nullable|boolean',
+]);
 
-            $promotion = Promotion::create([
-                'name' => $validated['name'],
-                'description' => $validated['description'] ?? null,
-                'type' => $validated['type'],
-                'discount_value' => $validated['discount_value'],
-                'medicine_id' => $validated['medicine_id'] ?? null,
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'max_quantity' => $validated['max_quantity'] ?? null,
-                'is_active' => true,
-                'usage_count' => 0,
-            ]);
+           $promotion = Promotion::create([
+    'name' => $validated['name'],
+    'description' => $validated['description'] ?? null,
+    'type' => $validated['type'],
+    'discount_value' => $validated['discount_value'],
+    'minimum_purchase' => $validated['minimum_purchase'] ?? 0,
+    'start_date' => $validated['start_date'],
+    'end_date' => $validated['end_date'],
+    'is_active' => true,
+]);
 
             // Notify all customers
             $this->notifyCustomers($promotion);
@@ -114,10 +117,12 @@ class PromotionController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Promo tidak ditemukan'
-            ], 404);
-        }
+    return response()->json([
+        'message' => $e->getMessage(),
+        'line' => $e->getLine(),
+        'file' => $e->getFile(),
+    ], 500);
+}
     }
 
     /**
@@ -128,25 +133,28 @@ class PromotionController extends Controller
         try {
             $promotion = Promotion::findOrFail($id);
 
-            $validated = $request->validate([
-                'name' => 'required|string',
-                'description' => 'nullable|string',
-                'type' => 'required|in:percentage,fixed',
-                'discount_value' => 'required|numeric|min:0',
-                'end_date' => 'required|date|after:start_date',
-                'max_quantity' => 'nullable|integer|min:1',
-                'is_active' => 'nullable|boolean',
-            ]);
+        $validated = $request->validate([
+    'name' => 'required|string',
+    'description' => 'nullable|string',
+    'type' => 'required|in:percentage,fixed',
+    'discount_value' => 'required|numeric|min:0',
+    'minimum_purchase' => 'nullable|numeric|min:0',
+    'start_date' => 'required|date',
+    'end_date' => 'required|date|after:start_date',
+    'max_quantity' => 'nullable|integer|min:1',
+    'is_active' => 'nullable|boolean',
+]);
 
-            $promotion->update([
-                'name' => $validated['name'],
-                'description' => $validated['description'] ?? $promotion->description,
-                'type' => $validated['type'],
-                'discount_value' => $validated['discount_value'],
-                'end_date' => $validated['end_date'],
-                'max_quantity' => $validated['max_quantity'] ?? $promotion->max_quantity,
-                'is_active' => $validated['is_active'] ?? $promotion->is_active,
-            ]);
+    $promotion->update([
+    'name' => $validated['name'],
+    'description' => $validated['description'] ?? null,
+    'type' => $validated['type'],
+    'discount_value' => $validated['discount_value'],
+    'minimum_purchase' => $validated['minimum_purchase'] ?? 0,
+    'start_date' => $validated['start_date'],
+    'end_date' => $validated['end_date'],
+    'is_active' => $validated['is_active'] ?? false,
+]);
 
             return response()->json([
                 'message' => 'Promo berhasil diperbarui',
@@ -159,10 +167,12 @@ class PromotionController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Promo tidak ditemukan'
-            ], 404);
-        }
+    return response()->json([
+        'message' => $e->getMessage(),
+        'line' => $e->getLine(),
+        'file' => $e->getFile(),
+    ], 500);
+}
     }
 
     /**
@@ -179,10 +189,12 @@ class PromotionController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Promo tidak ditemukan'
-            ], 404);
-        }
+    return response()->json([
+        'message' => $e->getMessage(),
+        'line' => $e->getLine(),
+        'file' => $e->getFile(),
+    ], 500);
+}
     }
 
     /**
