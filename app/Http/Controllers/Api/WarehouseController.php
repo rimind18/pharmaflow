@@ -11,27 +11,38 @@ class WarehouseController extends Controller
     /**
      * Get all warehouses
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
 
-            $warehouses =
-                Warehouse::latest()
-                ->get();
+            $query = Warehouse::query()
+                ->withCount([
+                    'shelves',
+                    'stocks'
+                ]);
+
+            if ($request->filled('search')) {
+                $query->where(
+                    'name',
+                    'like',
+                    '%' . $request->search . '%'
+                );
+            }
+
+            $warehouses = $query
+                ->latest()
+                ->paginate(
+                    $request->per_page ?? 20
+                );
 
             return response()->json([
-                'message' =>
-                    'Warehouses retrieved successfully',
-
-                'data' =>
-                    $warehouses
-            ], 200);
-
+                'message' => 'Warehouses retrieved successfully',
+                'data' => $warehouses
+            ]);
         } catch (\Exception $e) {
 
             return response()->json([
-                'message' =>
-                    $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -46,10 +57,10 @@ class WarehouseController extends Controller
             $validated =
                 $request->validate([
                     'name' =>
-                        'required|string|max:255',
+                    'required|string|max:255',
 
                     'location' =>
-                        'nullable|string'
+                    'nullable|string'
                 ]);
 
             $warehouse =
@@ -59,17 +70,16 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'message' =>
-                    'Warehouse created successfully',
+                'Warehouse created successfully',
 
                 'data' =>
-                    $warehouse
+                $warehouse
             ], 201);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 'message' =>
-                    $e->getMessage()
+                $e->getMessage()
             ], 500);
         }
     }
@@ -80,23 +90,28 @@ class WarehouseController extends Controller
     public function show(string $id)
     {
         try {
-
-            $warehouse =
-                Warehouse::findOrFail($id);
+            $warehouse = Warehouse::with([
+                'shelves',
+                'stocks'
+            ])
+                ->withCount([
+                    'shelves',
+                    'stocks'
+                ])
+                ->findOrFail($id);
 
             return response()->json([
                 'message' =>
-                    'Warehouse retrieved',
+                'Warehouse retrieved',
 
                 'data' =>
-                    $warehouse
+                $warehouse
             ], 200);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 'message' =>
-                    $e->getMessage()
+                $e->getMessage()
             ], 404);
         }
     }
@@ -116,10 +131,10 @@ class WarehouseController extends Controller
             $validated =
                 $request->validate([
                     'name' =>
-                        'required|string|max:255',
+                    'required|string|max:255',
 
                     'location' =>
-                        'nullable|string'
+                    'nullable|string'
                 ]);
 
             $warehouse->update(
@@ -128,17 +143,16 @@ class WarehouseController extends Controller
 
             return response()->json([
                 'message' =>
-                    'Warehouse updated',
+                'Warehouse updated',
 
                 'data' =>
-                    $warehouse
+                $warehouse
             ], 200);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 'message' =>
-                    $e->getMessage()
+                $e->getMessage()
             ], 500);
         }
     }
@@ -150,21 +164,35 @@ class WarehouseController extends Controller
     {
         try {
 
-            $warehouse =
-                Warehouse::findOrFail($id);
+            $warehouse = Warehouse::findOrFail($id);
+
+            if ($warehouse->stocks()->exists()) {
+
+                return response()->json([
+                    'message' =>
+                    'Gudang masih memiliki stok'
+                ], 422);
+            }
+
+            if ($warehouse->shelves()->exists()) {
+
+                return response()->json([
+                    'message' =>
+                    'Gudang masih memiliki rak'
+                ], 422);
+            }
 
             $warehouse->delete();
 
             return response()->json([
                 'message' =>
-                    'Warehouse deleted'
-            ], 200);
-
+                'Warehouse deleted'
+            ]);
         } catch (\Exception $e) {
 
             return response()->json([
                 'message' =>
-                    $e->getMessage()
+                $e->getMessage()
             ], 500);
         }
     }

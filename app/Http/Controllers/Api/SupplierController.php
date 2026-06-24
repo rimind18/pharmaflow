@@ -12,39 +12,44 @@ class SupplierController extends Controller
     /**
      * Display a listing of suppliers
      */
-    public function index(Request $request)
-    {
-        try {
-            $query = Supplier::withCount('medicines', 'purchases');
+   public function index(Request $request)
+{
+    try {
+        $query = Supplier::withCount(['medicines', 'purchases']);
 
-            // Search
-            if ($request->has('search')) {
-                $search = $request->get('search');
-                $query->where('name', 'like', "%$search%")
-                      ->orWhere('email', 'like', "%$search%")
-                      ->orWhere('phone', 'like', "%$search%");
-            }
+        if ($request->filled('search')) {
+            $search = $request->search;
 
-            // Filter active
-            if ($request->has('is_active')) {
-                $query->where('is_active', $request->boolean('is_active'));
-            }
-
-            // Pagination
-            $perPage = $request->get('per_page', 15);
-            $suppliers = $query->paginate($perPage);
-
-            return response()->json([
-                'message' => 'Data supplier berhasil diambil',
-                'data' => $suppliers
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
-            ], 500);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
         }
+
+        if ($request->filled('city')) {
+            $query->where('city', 'like', '%' . $request->city . '%');
+        }
+
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $suppliers = $query
+            ->latest()
+            ->paginate($request->get('per_page', 15));
+
+        return response()->json([
+            'message' => 'Data supplier berhasil diambil',
+            'data' => $suppliers
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Store a newly created supplier
