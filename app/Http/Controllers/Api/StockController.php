@@ -479,25 +479,28 @@ class StockController extends Controller
     /**
      * Get stock detail
      */
-    public function show($id)
-    {
-        try {
+ public function show($id)
+{
+    try {
 
-            $stock = Stock::with([
-                'medicine',
-                'warehouse',
-                'shelf'
-            ])->findOrFail($id);
+        $stock = Stock::with([
+            'medicine',
+            'warehouse',
+            'shelf',
+            'mutations',
+            'adjustments'
+        ])->findOrFail($id);
 
-            return response()->json([
-                'message' => 'Stock detail retrieved',
-                'data' => $stock
-            ], 200);
-        } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Stock detail retrieved',
+            'data' => $stock
+        ]);
 
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 404);
-        }
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 404);
     }
+}
 }

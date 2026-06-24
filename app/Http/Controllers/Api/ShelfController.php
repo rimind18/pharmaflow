@@ -12,7 +12,8 @@ class ShelfController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Shelf::with('warehouse', 'stocks');
+            $query = Shelf::with('warehouse')
+                ->withCount('stocks');
 
             if ($request->has('warehouse_id')) {
                 $query->where('warehouse_id', $request->get('warehouse_id'));
@@ -20,8 +21,10 @@ class ShelfController extends Controller
 
             if ($request->has('search')) {
                 $search = $request->get('search');
-                $query->where('name', 'like', "%$search%")
-                      ->orWhere('code', 'like', "%$search%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%");
+                });
             }
 
             $shelves = $query->paginate(20);
@@ -30,7 +33,6 @@ class ShelfController extends Controller
                 'message' => 'Shelves retrieved successfully',
                 'data' => $shelves
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -55,7 +57,6 @@ class ShelfController extends Controller
                 'message' => 'Shelf created successfully',
                 'data' => $shelf->load('warehouse')
             ], 201);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -77,7 +78,6 @@ class ShelfController extends Controller
                 'message' => 'Shelf retrieved successfully',
                 'data' => $shelf
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Shelf not found'
@@ -104,7 +104,6 @@ class ShelfController extends Controller
                 'message' => 'Shelf updated successfully',
                 'data' => $shelf->load('warehouse')
             ], 200);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
@@ -126,7 +125,6 @@ class ShelfController extends Controller
             return response()->json([
                 'message' => 'Shelf deleted successfully'
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Shelf not found'

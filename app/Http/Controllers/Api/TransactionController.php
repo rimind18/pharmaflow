@@ -54,17 +54,71 @@ class TransactionController extends Controller
             );
         }
 
+        if ($request->filled('payment_method')) {
+            $query->where(
+                'payment_method',
+                $request->payment_method
+            );
+        }
+
+
+        if ($request->filled('cashier_id')) {
+            $query->where(
+                'kasir_id',
+                $request->cashier_id
+            );
+        }
+
+        if (
+            $request->filled('start_date') &&
+            $request->filled('end_date')
+        ) {
+            $query->whereBetween(
+                'created_at',
+                [
+                    $request->start_date,
+                    $request->end_date
+                ]
+            );
+        }
+
+
         $transactions = $query
             ->latest()
             ->paginate(
                 $request->per_page ?? 20
             );
 
+            
+
+
+
+        $summary = [
+            'transaction_count' => $transactions->count(),
+            'total_sales' => $transactions->sum('final_amount'),
+            'total_discount' => $transactions->sum('discount_amount'),
+            'average_transaction' => $transactions->avg('final_amount'),
+
+            'cash_sales' => Transaction::where('payment_method', 'cash')
+                ->sum('final_amount'),
+
+            'transfer_sales' => Transaction::where('payment_method', 'transfer')
+                ->sum('final_amount'),
+
+            'credit_card_sales' => Transaction::where('payment_method', 'credit_card')
+                ->sum('final_amount'),
+
+            'total_items_sold' => TransactionItem::sum('quantity'),
+        ];
+
         return response()->json([
             'success' => true,
-            'data' => $transactions
+            'data' => $transactions,
+            'summary' => $summary
         ]);
     }
+
+
 
     /**
      * STORE POS TRANSACTION
@@ -260,7 +314,7 @@ class TransactionController extends Controller
                         'subtotal' =>
                         $item['subtotal']
                     ]);
-                    
+
                 $this->fifoService->consume(
                     $transactionItem,
                     $transactionItem->quantity
@@ -677,20 +731,35 @@ class TransactionController extends Controller
      * DETAIL TRANSACTION
      */
     public function show($id)
-    {
-        $transaction =
-            Transaction::with([
-                'kasir',
-                'items.medicine'
-            ])
-            ->findOrFail($id);
+{
+    $transaction = Transaction::with([
+        'kasir',
+        'items.medicine'
+    ])
+    ->findOrFail($id);
 
-        return response()->json([
+    $cost = 0;
 
-            'success' => true,
+    foreach ($transaction->items as $item) {
 
-            'data' =>
-            $transaction
-        ]);
+        $purchasePrice = $item->medicine->base_price ?? 0;
+
+        $cost += $purchasePrice * $item->quantity;
     }
+
+    $profit = $transaction->final_amount - $cost;
+
+    $margin = $transaction->final_amount > 0
+        ? round(($profit / $transaction->final_amount) * 100, 2)
+        : 0;
+
+    $transaction->cost_amount = $cost;
+    $transaction->profit_amount = $profit;
+    $transaction->margin_percent = $margin;
+
+    return response()->json([
+        'success' => true,
+        'data' => $transaction
+    ]);
+}
 }

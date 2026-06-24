@@ -1137,7 +1137,7 @@ public function cashflowReport(Request $request)
 
                         'supplier_name' =>
                         $medicine->supplier?->name,
-                        
+
 
                         'estimated_cost' =>
                         $recommendedOrder *
@@ -1450,5 +1450,21 @@ public function cashflowReport(Request $request)
             new FinancialReportExport(),
             'financial_report.xlsx'
         );
+    }
+    public function posSummary()
+    {
+        return response()->json([
+            'transactions_today' =>
+            Transaction::whereDate(
+                'created_at',
+                today()
+            )->count(),
+
+            'revenue_today' =>
+            Transaction::whereDate(
+                'created_at',
+                today()
+            )->sum('final_amount'),
+        ]);
     }
 }

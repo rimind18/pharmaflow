@@ -47,7 +47,7 @@
           >
             <option value="">Semua</option>
             <option value="percentage">📊 Persen (%)</option>
-            <option value="nominal">💰 Nominal (Rp)</option>
+            <option value="fixed">💰 Nominal (Rp)</option>
           </select>
         </div>
 
@@ -139,7 +139,7 @@
             <!-- Diskon -->
             <td class="px-6 py-4">
               <div class="font-bold text-lg">
-                <span v-if="voucher.discount_type === 'percentage'" class="text-blue-600">
+                <span v-if="voucher.type === 'percentage'" class="text-blue-600">
                   {{ voucher.discount_value }}%
                 </span>
                 <span v-else class="text-green-600">
@@ -147,7 +147,7 @@
                 </span>
               </div>
               <p class="text-xs text-gray-600">
-                {{ voucher.discount_type === 'percentage' ? 'Persentase' : 'Nominal' }}
+                {{ voucher.type === 'percentage' ? 'Persentase' : 'Nominal' }}
               </p>
             </td>
 
@@ -158,20 +158,26 @@
 
             <!-- Kuota -->
             <td class="px-6 py-4 text-center">
-              <div class="font-bold text-lg">{{ voucher.quota }}</div>
+              <div class="font-bold text-lg">{{ voucher.max_usage }}</div>
               <p class="text-xs text-gray-600">kuota</p>
             </td>
 
             <!-- Digunakan -->
             <td class="px-6 py-4 text-center">
-              <div class="font-bold" :class="voucher.usage_count > voucher.quota * 0.8 ? 'text-orange-600' : 'text-blue-600'">
-                {{ voucher.usage_count }}
+              <div class="font-bold" :class="voucher.current_usage> voucher.max_usage* 0.8 ? 'text-orange-600' : 'text-blue-600'">
+                {{ voucher.current_usage }}
               </div>
               <div class="w-16 bg-gray-200 rounded-full h-2 mt-1 mx-auto">
                 <div
                   class="h-2 rounded-full transition-all"
-                  :class="voucher.usage_count > voucher.quota * 0.8 ? 'bg-orange-500' : 'bg-blue-500'"
-                  :style="{ width: Math.min((voucher.usage_count / voucher.quota * 100), 100) + '%' }"
+                  :class="voucher.current_usage > voucher.max_usage * 0.8 ? 'bg-orange-500' : 'bg-blue-500'"
+                 :style="{
+ width: Math.min(
+   ((voucher.current_usage || 0) /
+   (voucher.max_usage || 1)) * 100,
+   100
+ ) + '%'
+}"
                 ></div>
               </div>
             </td>
@@ -256,13 +262,13 @@
             <div>
               <p class="text-sm text-gray-600">Tipe</p>
               <p class="font-bold text-lg">
-                {{ selectedVoucher.discount_type === 'percentage' ? '📊 Persen' : '💵 Nominal' }}
+                {{ selectedVoucher.type === 'percentage' ? '📊 Persen' : '💵 Nominal' }}
               </p>
             </div>
             <div>
               <p class="text-sm text-gray-600">Nilai</p>
-              <p class="font-bold text-lg" :class="selectedVoucher.discount_type === 'percentage' ? 'text-blue-600' : 'text-green-600'">
-                <span v-if="selectedVoucher.discount_type === 'percentage'">{{ selectedVoucher.discount_value }}%</span>
+              <p class="font-bold text-lg" :class="selectedVoucher.type === 'percentage' ? 'text-blue-600' : 'text-green-600'">
+                <span v-if="selectedVoucher.type === 'percentage'">{{ selectedVoucher.discount_value }}%</span>
                 <span v-else>Rp{{ formatPrice(selectedVoucher.discount_value) }}</span>
               </p>
             </div>
@@ -279,28 +285,28 @@
           <div class="grid grid-cols-3 gap-4">
             <div>
               <p class="text-sm text-gray-600">Total Kuota</p>
-              <p class="font-bold text-lg text-purple-600">{{ selectedVoucher.quota }}</p>
+              <p class="font-bold text-lg text-purple-600">{{ selectedVoucher.max_usage }}</p>
             </div>
             <div>
               <p class="text-sm text-gray-600">Sudah Digunakan</p>
-              <p class="font-bold text-lg" :class="selectedVoucher.usage_count > selectedVoucher.quota * 0.8 ? 'text-orange-600' : 'text-blue-600'">
-                {{ selectedVoucher.usage_count }}
+              <p class="font-bold text-lg" :class="selectedVoucher.current_usage > selectedVoucher.max_usage * 0.8 ? 'text-orange-600' : 'text-blue-600'">
+                {{ selectedVoucher.current_usage}}
               </p>
             </div>
             <div>
               <p class="text-sm text-gray-600">Sisa Kuota</p>
-              <p class="font-bold text-lg text-green-600">{{ selectedVoucher.quota - selectedVoucher.usage_count }}</p>
+              <p class="font-bold text-lg text-green-600">{{ selectedVoucher.max_usage- selectedVoucher.current_usage }}</p>
             </div>
           </div>
           <div class="w-full bg-gray-200 rounded-full h-3 mt-3">
             <div
               class="h-3 rounded-full transition-all"
-              :class="selectedVoucher.usage_count > selectedVoucher.quota * 0.8 ? 'bg-orange-500' : 'bg-blue-500'"
-              :style="{ width: Math.min((selectedVoucher.usage_count / selectedVoucher.quota * 100), 100) + '%' }"
+              :class="selectedVoucher.current_usage > selectedVoucher.max_usage * 0.8 ? 'bg-orange-500' : 'bg-blue-500'"
+              :style="{ width: Math.min((selectedVoucher.current_usage/ selectedVoucher.max_usage * 100), 100) + '%' }"
             ></div>
           </div>
           <p class="text-xs text-gray-600 mt-1">
-            {{ Math.round((selectedVoucher.usage_count / selectedVoucher.quota * 100)) }}% digunakan
+            {{ Math.round((selectedVoucher.current_usage/ selectedVoucher.max_usage * 100)) }}% digunakan
           </p>
         </div>
 
@@ -365,25 +371,25 @@
             <div>
               <label class="block text-gray-700 font-semibold mb-2">Tipe Diskon *</label>
               <select
-                v-model="form.discount_type"
+                v-model="form.type"
                 @change="form.discount_value = 0"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
               >
                 <option value="percentage">📊 Persentase (%)</option>
-                <option value="nominal">💵 Nominal (Rp)</option>
+                <option value="fixed">💵 Nominal (Rp)</option>
               </select>
             </div>
 
             <div>
               <label class="block text-gray-700 font-semibold mb-2">
-                {{ form.discount_type === 'percentage' ? 'Persentase (%)' : 'Nominal (Rp)' }} *
+                {{ form.type === 'percentage' ? 'Persentase (%)' : 'Nominal (Rp)' }} *
               </label>
               <input
                 v-model.number="form.discount_value"
                 type="number"
                 min="0"
-                :max="form.discount_type === 'percentage' ? 100 : undefined"
+                :max="form.type === 'percentage' ? 100 : undefined"
                 step="0.1"
                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
@@ -499,7 +505,7 @@ const stats = ref({
 
 const form = ref({
   code: '',
-  discount_type: 'percentage',
+ type: 'percentage',
   discount_value: 0,
   minimum_purchase: 0,
   quota: 1,
@@ -526,13 +532,21 @@ const getDaysRemaining = (endDate) => {
 }
 
 const voucherStatus = (voucher) => {
-  const today = dayjs()
-  const endDate = dayjs(voucher.end_date)
+    const now = dayjs()
 
-  if (today.isAfter(endDate)) return 'expired'
-  if (!voucher.is_active) return 'inactive'
-  if (voucher.usage_count >= voucher.quota) return 'used_up'
-  return 'active'
+    if (dayjs(voucher.end_date).isBefore(now))
+        return 'expired'
+
+    if (!voucher.is_active)
+        return 'inactive'
+
+    if (
+        voucher.max_usage &&
+        voucher.current_usage >= voucher.max_usage
+    )
+        return 'used_up'
+
+    return 'active'
 }
 
 const getStatusColor = (status) => {
@@ -567,21 +581,69 @@ const getStatusLabel = (status) => {
 
 const fetchVouchers = async () => {
   loading.value = true
+
   try {
-    const params = { per_page: 100 }
-    if (searchQuery.value) params.search = searchQuery.value
-    if (filterStatus.value) params.status = filterStatus.value
-    if (filterType.value) params.discount_type = filterType.value
-    if (filterPeriod.value) {
-      const [year, month] = filterPeriod.value.split('-')
-      params.start_date = `${year}-${month}-01`
-      params.end_date = dayjs(`${year}-${month}-01`).endOf('month').format('YYYY-MM-DD')
+    const params = {
+  per_page: 100
+}
+
+if (searchQuery.value) {
+  params.search = searchQuery.value
+}
+
+if (filterStatus.value === 'active') {
+  params.is_active = true
+}
+else if (filterStatus.value === 'inactive') {
+  params.is_active = false
+}
+else if (filterStatus.value === 'expired') {
+  params.status = 'expired'
+}
+
+if (filterType.value) {
+  params.type = filterType.value
+}
+
+if (filterPeriod.value) {
+  const [year, month] = filterPeriod.value.split('-')
+
+  params.start_date = `${year}-${month}-01`
+
+  params.end_date = dayjs(
+    `${year}-${month}-01`
+  )
+  .endOf('month')
+  .format('YYYY-MM-DD')
+}
+
+console.log('FILTER PARAMS:', params)
+    const response = await api.get('/vouchers', {
+      params
+    })
+
+    vouchers.value = response.data.data.data || []
+
+    stats.value = {
+      total_vouchers: vouchers.value.length,
+
+      active_vouchers: vouchers.value.filter(
+        v => voucherStatus(v) === 'active'
+      ).length,
+
+      total_used: vouchers.value.reduce(
+        (sum, v) => sum + Number(v.current_usage || 0),
+        0
+      ),
+
+      total_discount: vouchers.value.reduce(
+        (sum, v) => sum + Number(v.discount_value || 0),
+        0
+      )
     }
 
-    const response = await api.get('vouchers', { params })
-    vouchers.value = response.data.data.data || []
-    stats.value = response.data.stats || {}
   } catch (error) {
+    console.error(error)
     ElMessage.error('Gagal memuat voucher')
   } finally {
     loading.value = false
@@ -590,12 +652,12 @@ const fetchVouchers = async () => {
 
 const openForm = (voucher = null) => {
   if (voucher) {
-    form.value = {
-      code: voucher.code,
-      discount_type: voucher.discount_type,
+      form.value = {
+  code: voucher.code,
+  type: voucher.type,
       discount_value: voucher.discount_value,
       minimum_purchase: voucher.minimum_purchase,
-      quota: voucher.quota,
+      quota: voucher.max_usage,
       start_date: dayjs(voucher.start_date).format('YYYY-MM-DDTHH:mm'),
       end_date: dayjs(voucher.end_date).format('YYYY-MM-DDTHH:mm'),
       is_active: voucher.is_active,
@@ -604,7 +666,7 @@ const openForm = (voucher = null) => {
   } else {
     form.value = {
       code: '',
-      discount_type: 'percentage',
+      type: 'percentage',
       discount_value: 0,
       minimum_purchase: 0,
       quota: 1,
@@ -631,12 +693,18 @@ const saveVoucher = async () => {
   savingForm.value = true
   try {
     const data = {
-      ...form.value,
-      start_date: dayjs(form.value.start_date).toISOString(),
-      end_date: dayjs(form.value.end_date).toISOString(),
-    }
+  code: form.value.code,
+  type: form.value.type,      // <-- penting
+  discount_value: form.value.discount_value,
+  minimum_purchase: form.value.minimum_purchase,
+  max_usage: form.value.quota,         // <-- penting
+  is_active: Boolean(form.value.is_active),
+  start_date: dayjs(form.value.start_date).toISOString(),
+  end_date: dayjs(form.value.end_date).toISOString(),
+}
 
     if (editingId.value) {
+      console.log(data)
       await api.put(`vouchers/${editingId.value}`, data)
       ElMessage.success('Voucher berhasil diperbarui')
     } else {
@@ -645,7 +713,7 @@ const saveVoucher = async () => {
     }
 
     showForm.value = false
-    fetchVouchers()
+    await fetchVouchers()
   } catch (error) {
     ElMessage.error(error.response?.data?.message || 'Gagal menyimpan voucher')
   } finally {
