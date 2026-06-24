@@ -1,12 +1,10 @@
 <template>
-    <div
-        class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50"
-    >
+   <div class="min-h-screen bg-gray-50">
         <!-- Header -->
-        <div
+         <div
             class="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-green-600 to-teal-700"
         >
-            <div class="absolute inset-0 bg-black/10"></div>
+            <div class="absolute inset-0 bg-black/10">
 
             <div class="relative max-w-7xl mx-auto px-6 py-12">
                 <div class="flex items-center justify-between">
@@ -18,6 +16,7 @@
                         <p class="text-green-100 text-lg">
                             Apotek RHD Farma • Aman • Cepat • Terpercaya
                         </p>
+                    </div>
                     </div>
 
                     <div

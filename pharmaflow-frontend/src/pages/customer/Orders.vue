@@ -27,7 +27,7 @@
 
                     <div>
                         <h1
-                            class="text-3xl md:text-4xl font-extrabold tracking-tight"
+                            class="text-white text-3xl md:text-4xl font-extrabold tracking-tight"
                         >
                             Pesanan Saya
                         </h1>
@@ -591,6 +591,28 @@
                         <div
                             class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-6 border-t"
                         >
+                            <router-link
+                                :to="`/orders/${order.order_number}`"
+                                class="bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl flex items-center justify-center gap-2"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15 12H9m12 0A9 9 0 1112 3a9 9 0 019 9z"
+                                    />
+                                </svg>
+
+                                <span>Detail</span>
+                            </router-link>
+
                             <router-link
                                 :to="{
                                     name: 'ProductDetail',
